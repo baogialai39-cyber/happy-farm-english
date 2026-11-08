@@ -33,8 +33,11 @@ async function boot() {
   const audio = new AudioEngine(meta.musicOn);
 
   // Trình duyệt chỉ cho phát âm thanh sau lần chạm đầu tiên.
-  document.addEventListener('pointerdown', () => audio.unlock(), { capture: true });
-  document.addEventListener('keydown', () => audio.unlock(), { capture: true, once: true });
+  // Mở khóa âm thanh ở MỌI thao tác của bé (F-210). iOS chỉ coi touchend / click / pointerup (chạm)
+  // là thao tác người dùng — pointerdown chỉ có tác dụng với chuột máy tính.
+  for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'] as const) {
+    document.addEventListener(ev, () => audio.unlock(), { capture: true, passive: true });
+  }
 
   let navId = 0;
   const ctx: AppCtx = {

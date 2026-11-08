@@ -110,3 +110,11 @@
   .pt-row { grid-template-columns: 1fr; }
   .sky-pill { min-width: 96px; }
 }
+
+/* TEST SOUND (F-212) — khu phụ huynh */
+.st { margin-top: 18px; padding-top: 14px; border-top: 2px dashed #e6dcef; }
+.st-btn { width: 100%; }
+.st-results { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.st-line { display: flex; gap: 8px; align-items: flex-start; font-size: 17px; line-height: 1.35; color: var(--ink); }
+.st-warn { color: #8a4b00; }
+.st-tip { font-size: 16px; color: #5a6b86; }

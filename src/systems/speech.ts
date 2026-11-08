@@ -41,8 +41,8 @@ let consecutiveFailures = 0;
  * Giọng em bé (SPEC 18.8): ưu tiên giọng TRẺ EM có sẵn trên máy (tên chứa child/kid/junior hoặc "Ana"),
  * rồi giọng NỮ trẻ vui tươi, rồi giọng Mỹ khác. Không giả giọng một em bé cụ thể.
  */
-const CHILD = /child|kid|junior|ana/i;
-const YOUNG_FEMALE = /samantha|ava|allison|aria|jenny|zira|susan|michelle|emma|ana/i;
+const CHILD = /child|kid|junior|\bana\b/i;
+const YOUNG_FEMALE = /samantha|ava|allison|aria|jenny|zira|susan|michelle|emma|ana\b/i;
 const US_OTHER = /alex|guy|david|mark/i;
 
 /** Chọn giọng: tiếng Anh + cục bộ; en-US (trẻ em → nữ trẻ → khác), rồi en-GB, rồi tiếng Anh khác. */
@@ -58,8 +58,50 @@ export function pitchFor(v: SpeechSynthesisVoice | null): number {
   return v && CHILD.test(v.name) ? 1.1 : 1.3;
 }
 
+/** Số giọng máy đã trả về (iOS có lúc trả danh sách rỗng ở lần đầu). */
+let voiceCount = 0;
 function refresh() {
-  voice = backend ? pickLocalEnglishVoice(backend.getVoices()) : null;
+  const list = backend ? backend.getVoices() : [];
+  voiceCount = list.length;
+  voice = backend ? pickLocalEnglishVoice(list) : null;
+}
+
+/** iPhone / iPad (kể cả iPadOS báo là Macintosh). */
+export function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 1);
+}
+
+/**
+ * iOS chưa trả danh sách giọng → vẫn đọc bằng giọng tiếng Anh MẶC ĐỊNH của máy (chạy trên thiết bị, SPEC 9).
+ * Máy tính: không dự phòng (chỉ giọng cục bộ đã chọn — SPEC 15.2).
+ */
+function useDefaultVoice(): boolean {
+  return !!backend && !voice && voiceCount === 0 && isIOS();
+}
+
+let speechUnlocked = false;
+/**
+ * Mở khóa giọng đọc trên iOS: PHẢI gọi đồng bộ trong sự kiện chạm (touchend / click).
+ * iOS chỉ cho đọc sau khi lần speak() đầu tiên xảy ra trong một thao tác của người dùng.
+ * Mỗi lần chạm cũng xóa bộ đếm lỗi (lỗi trước khi mở khóa không được làm tắt giọng vĩnh viễn).
+ */
+export function unlockSpeech(): void {
+  consecutiveFailures = 0;
+  if (!backend) return;
+  if (!voice) refresh();
+  if (speechUnlocked) return;
+  speechUnlocked = true;
+  try {
+    const u = backend.makeUtterance(' ');
+    u.volume = 0;
+    u.lang = voice?.lang ?? 'en-US';
+    if (voice) u.voice = voice;
+    if (backend.paused) backend.resume();
+    backend.speak(u);
+  } catch {
+    speechUnlocked = false; // thử lại ở lần chạm sau
+  }
 }
 refresh();
 backend?.onVoicesChanged(refresh);
@@ -75,11 +117,18 @@ export function setSpeechBackend(b: SpeechBackend | null): void {
 
 export function hasVoice(): boolean {
   if (!voice) refresh();
-  return voice !== null && consecutiveFailures < 3;
+  return (voice !== null || useDefaultVoice()) && consecutiveFailures < 3;
 }
 
 export function voiceInfo(): { name: string; lang: string } | null {
-  return voice ? { name: voice.name, lang: voice.lang } : null;
+  if (voice) return { name: voice.name, lang: voice.lang };
+  return useDefaultVoice() ? { name: 'Giọng tiếng Anh mặc định của máy', lang: 'en-US' } : null;
+}
+
+/** Số giọng máy đang có (để TEST SOUND hiển thị). */
+export function voiceTotal(): number {
+  refresh();
+  return voiceCount;
 }
 
 /** Ước lượng thời gian đọc (ms) — dùng làm hạn giờ dự phòng và khi máy không có giọng. */
@@ -102,7 +151,7 @@ export function stopSpeech(): void {
 /** Đọc một lần; luôn kết thúc (xong / lỗi / hạn giờ). Trả về true nếu đọc thành công. */
 function speakOnce(text: string, rate: number, myToken: number): Promise<boolean> {
   return new Promise((resolve) => {
-    if (!backend || !voice) return resolve(false);
+    if (!backend || (!voice && !useDefaultVoice())) return resolve(false);
     let finished = false;
     const finish = (ok: boolean) => {
       if (finished) return;
@@ -111,8 +160,8 @@ function speakOnce(text: string, rate: number, myToken: number): Promise<boolean
       resolve(ok);
     };
     const u = backend.makeUtterance(text);
-    u.voice = voice;
-    u.lang = voice.lang; // luôn là tiếng Anh
+    if (voice) u.voice = voice;
+    u.lang = voice?.lang ?? 'en-US'; // luôn là tiếng Anh
     u.rate = rate;
     u.pitch = pitchFor(voice);
     u.volume = 1;
@@ -170,4 +219,36 @@ export async function speakPlan(plan: SpeakPlan): Promise<SpeechResult> {
 /** Đọc một câu ngắn một lần (lời người bán, chào…). Cũng đi qua kênh chung → hủy lời cũ. */
 export function speak(text: string, rate = 1): void {
   void speakPlan({ text, times: 1, pauseMs: 0, rate });
+}
+
+/**
+ * TEST SOUND (F-212): đọc thử một câu và báo THẬT điều gì đã xảy ra (bắt đầu? kết thúc? lỗi gì?).
+ * Gọi trong sự kiện chạm để iOS cho phép đọc.
+ */
+export function testSpeech(text: string, rate = 0.9): Promise<{ started: boolean; ended: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!backend) return resolve({ started: false, ended: false, error: 'no-speech-synthesis' });
+    stopSpeech();
+    let started = false;
+    const done = (r: { started: boolean; ended: boolean; error?: string }) => {
+      clearTimeout(timer);
+      resolve(r);
+    };
+    const u = backend.makeUtterance(text);
+    if (voice) u.voice = voice;
+    u.lang = voice?.lang ?? 'en-US';
+    u.rate = rate;
+    u.pitch = pitchFor(voice);
+    u.volume = 1;
+    u.onstart = () => { started = true; };
+    u.onend = () => done({ started: true, ended: true });
+    u.onerror = (e: SpeechSynthesisErrorEvent | Event) => done({ started, ended: false, error: (e as SpeechSynthesisErrorEvent).error ?? 'error' });
+    const timer = setTimeout(() => done({ started, ended: false, error: started ? undefined : 'timeout' }), 6000);
+    try {
+      if (backend.paused) backend.resume();
+      backend.speak(u);
+    } catch (err) {
+      done({ started: false, ended: false, error: String(err) });
+    }
+  });
 }

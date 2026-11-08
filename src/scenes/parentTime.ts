@@ -10,6 +10,7 @@ import {
 } from '../systems/playtime';
 import { h } from '../ui/dom';
 import { openPanel } from '../ui/panel';
+import { soundTestSection } from './soundTest';
 
 const GROUP_VI = { '2-3': '2–3 tuổi', '4-5': '4–5 tuổi', '6-8': '6–8 tuổi' } as const;
 
@@ -73,6 +74,7 @@ export async function openParentTime(ctx: AppCtx, host: HTMLElement, profile: Ch
         'Bố mẹ chỉ có thể giảm, không thể vượt mức khuyến nghị theo tuổi. Thời gian chỉ được tính khi ứng dụng đang mở trên màn hình.'),
       h('div', { class: 'pt-actions' }, endBreak, saveBtn),
       saved,
+      soundTestSection(ctx),
     ),
   );
   paint();

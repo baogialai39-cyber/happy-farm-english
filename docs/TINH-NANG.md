@@ -243,12 +243,22 @@
 
 ---
 
+## R. Âm thanh trên iPhone (Safari iOS, Chrome iOS)
+
+| Mã | Tính năng | Tiêu chí nghiệm thu | Trạng thái |
+|---|---|---|---|
+| F-210 | Mở khóa Web Audio đúng chuẩn iOS: trong sự kiện chạm, resume cả `suspended` / `interrupted`, phát được khi gạt nút im lặng | Nhạc nền + hiệu ứng phát trên iPhone sau lần chạm đầu | IN PROGRESS (chờ thử trên iPhone thật) |
+| F-211 | Mở khóa giọng đọc iOS + dự phòng giọng tiếng Anh mặc định khi iOS chưa trả danh sách giọng | Chạm Hello / con vật / trái cây / đồ vật nghe tên tiếng Anh trên iPhone | IN PROGRESS (chờ thử trên iPhone thật) |
+| F-212 | TEST SOUND trong khu phụ huynh: kiểm tra AudioContext, HTMLAudioElement, giọng đọc; báo lỗi dễ hiểu | Kết quả thật (không giả), có gợi ý khắc phục | DONE |
+
+---
+
 ## Tổng hợp trạng thái
 
 | Trạng thái | Số lượng |
 |---|---|
-| DONE | 111 |
-| IN PROGRESS | 7 |
+| DONE | 112 |
+| IN PROGRESS | 9 |
 | TODO | 11 |
 | ĐÃ GỠ | 13 |
 
@@ -301,3 +311,5 @@
 | 2026-11-08 | Thêm F-190 → F-202 (bản đồ thế giới, 9 khu, thanh công cụ trái, Pet Park, School, Library). **Thay đổi tính năng DONE (không xóa chức năng)**: F-172 bảng Map 2 nơi → Bản đồ thế giới 9 khu; nút 🗺️ / 🏠 trên HUD → thanh công cụ trái; Zoo Passport chuyển vào COLLECTION; LET'S GO mở bản đồ thay vì vào thẳng nông trại; `place` thêm park/school/library. CLAUDE.md: thêm luật hình tham khảo & khu phải tương tác | Chủ dự án yêu cầu ở prompt giai đoạn 9 kèm ảnh tham khảo |
 | 2026-11-08 | Giai đoạn 9 xong: DONE F-190 → F-202. Hồi quy: 9 khu vào đúng nơi; nông trại, sở thú, mini-game, cửa hàng, giường, tủ đồ, Zoo Passport (nay trong COLLECTION) vẫn chạy; nút HOME / MAP chuyển sang thanh công cụ trái | 132 unit test (thêm: 9 khu đủ tên & vùng chạm, không chồng nhau, mỗi khu vào được & đồ vật đi tới được, mọi đồ vật nơi mới có mục từ & hình, ABC 26 chữ, lưu nơi chơi + save cũ, đổi nhân vật chỉ id có sẵn) + chạy thử trong trình duyệt: LET'S GO → bản đồ → 9 khu → MAP quay lại, trạm thú cưng (Feed/Brush/Play), bảng đen / bảng nhiệm vụ / kệ cúp / ABC, 3 kệ sách thư viện, CHANGE CHARACTER, COLLECTION, SETTINGS (Cổng phụ huynh), điện thoại & máy tính bảng |
 | 2026-11-08 | **Gỡ giai đoạn 9** (F-190 → F-202 → ĐÃ GỠ): bỏ bản đồ thế giới isometric, thanh công cụ trái, Pet Park, School, Library, đổi nhân vật từ thanh trái. **Khôi phục giao diện giai đoạn 8**: LET'S GO vào thẳng nơi đang chơi; nút 🏠 và 🗺️ trên HUD; bảng Map 2 nơi Farm ↔ Happy Zoo (F-172) + Zoo Passport; cổng sở thú mở bảng Map. CLAUDE.md và SPEC trở lại như trước giai đoạn 9. Save có `place` = park/school/library → tự về nông trại | Chủ dự án: "quay lại giao diện cũ đi bạn chứ cái này không ok" |
+| 2026-11-08 | Thêm F-210 → F-212 (âm thanh trên iPhone + TEST SOUND). Không đổi giao diện của bé; nút bật/tắt nhạc giữ nguyên | Chủ dự án báo: bản Vercel không có âm thanh trên iPhone |
+| 2026-11-08 | Sửa âm thanh iPhone: mở khóa Web Audio + giọng đọc ngay trong thao tác chạm (touchend/click/pointerup), resume cả `interrupted`, phát `silence.wav` qua thẻ <audio> + `audioSession = playback` để nghe được khi gạt im lặng, giọng mặc định en-US khi iOS chưa có danh sách giọng, mỗi lần chạm xóa khóa "tắt giọng sau 3 lỗi", sửa regex giọng trẻ em (ký tự backspace lạ). Thêm 2 file `public/sounds/*.wav`. DONE F-212 (TEST SOUND). F-210, F-211 chờ chủ dự án thử trên iPhone thật | 119 unit test (thêm 8: mở khóa giọng đồng bộ, giọng mặc định iOS, máy tính không dự phòng, gỡ khóa lỗi, TEST SOUND báo thật, 2 file WAV hợp lệ) + thử trên Chromium (bảng ứng dụng): TEST SOUND toàn ✅, Hello! đọc xong, chạm COW đọc tên, chạm làm AudioContext từ suspended → running, bật/tắt nhạc. Chưa thử được Safari iOS thật |

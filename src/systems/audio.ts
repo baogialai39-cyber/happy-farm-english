@@ -37,7 +37,30 @@ const EVENING: (number | null)[] = [
 ];
 const EVENING_BASS = [65.41, 55.0, 43.65, 49.0, 65.41, 55.0, 49.0, 65.41];
 
+import { unlockSpeech } from './speech';
+
+/**
+ * 2 file âm thanh nhỏ đi kèm app (public/sounds, Vercel phục vụ như file tĩnh):
+ * - silence.wav: đoạn im lặng để mở khóa phiên âm thanh iOS;
+ * - test-beep.wav: tiếng bíp cho TEST SOUND.
+ * Dùng file thật thay vì data:/blob: URL vì một số trình duyệt nhúng chặn phát media từ URL tạo tại chỗ.
+ */
+export const SOUND_FILES = {
+  silence: `${import.meta.env.BASE_URL}sounds/silence.wav`,
+  beep: `${import.meta.env.BASE_URL}sounds/test-beep.wav`,
+} as const;
+
 export type MusicMood = 'day' | 'evening';
+
+/** Kết quả kiểm tra Web Audio cho TEST SOUND (F-212). */
+export interface AudioDiagnosis {
+  supported: boolean;
+  state: string;
+  sampleRate: number;
+  clockRunning: boolean;
+  session: string;
+  musicOn: boolean;
+}
 
 export class AudioEngine {
   private ctx?: AudioContext;
@@ -49,22 +72,45 @@ export class AudioEngine {
   private step = 0;
   private wantMusic = true;
   private unlocked = false;
+  private primed = false;
+  /** Đoạn WAV im lặng phát lặp: giữ iOS ở chế độ "phát media" → không bị nút im lặng tắt tiếng. */
+  private media?: HTMLAudioElement;
 
   constructor(musicOn: boolean) {
     this.wantMusic = musicOn;
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return;
-      if (document.hidden) void this.ctx.suspend();
-      else if (this.unlocked) void this.ctx.resume();
+      if (document.hidden) {
+        this.ctx.suspend().catch(() => undefined);
+        this.media?.pause();
+      } else if (this.unlocked) {
+        // có thể bị iOS từ chối khi chưa có thao tác — lần chạm kế tiếp sẽ mở lại (unlock)
+        this.ctx.resume().catch(() => undefined);
+      }
     });
+  }
+
+  get state(): string {
+    return this.ctx?.state ?? 'none';
   }
 
   get musicOn(): boolean {
     return this.wantMusic;
   }
 
-  /** Gọi trong sự kiện chạm của người dùng (trình duyệt chặn tự phát âm thanh). */
+  /**
+   * MỞ KHÓA ÂM THANH (F-210) — gọi ĐỒNG BỘ trong sự kiện chạm (touchend / click / pointerup / keydown).
+   * Không chờ tác vụ bất đồng bộ nào trước đó (iOS chỉ cho phát trong chính thao tác của người dùng).
+   * Gọi lại mỗi lần chạm là an toàn: chỉ làm những việc còn thiếu.
+   */
   unlock(): void {
+    // iOS 17+: phát như media (không bị nút gạt im lặng tắt tiếng)
+    try {
+      const as = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+      if (as && as.type !== 'playback') as.type = 'playback';
+    } catch {
+      /* máy không hỗ trợ */
+    }
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
@@ -83,9 +129,47 @@ export class AudioEngine {
       this.sfxBus.gain.value = 0.35;
       this.sfxBus.connect(this.master);
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    // resume cả 'suspended' lẫn 'interrupted' (iOS sau cuộc gọi / chuyển app)
+    if (this.ctx.state !== 'running') this.ctx.resume().catch(() => undefined);
+    if (!this.primed) {
+      // phát 1 mẫu im lặng qua Web Audio ngay trong thao tác chạm (cách mở khóa kinh điển của iOS)
+      try {
+        const b = this.ctx.createBuffer(1, 1, 22050);
+        const src = this.ctx.createBufferSource();
+        src.buffer = b;
+        src.connect(this.ctx.destination);
+        src.start(0);
+        this.primed = true;
+      } catch {
+        /* thử lại lần chạm sau */
+      }
+    }
+    this.playSilentMedia();
+    unlockSpeech();
     this.unlocked = true;
     if (this.wantMusic) this.startMusic();
+  }
+
+  /** HTMLAudioElement im lặng: chuyển phiên âm thanh iOS sang "playback" (nghe được khi gạt im lặng). */
+  private playSilentMedia(): void {
+    if (typeof Audio === 'undefined') return;
+    if (!this.media) {
+      this.media = new Audio(SOUND_FILES.silence);
+      this.media.loop = true;
+      this.media.preload = 'auto';
+      this.media.setAttribute('playsinline', '');
+      this.media.setAttribute('aria-hidden', 'true');
+    }
+    if (this.media.paused) this.media.play().catch(() => undefined); // bị từ chối → thử lại lần chạm sau
+  }
+
+  /** TEST SOUND: kiểm tra THẬT trạng thái Web Audio (đồng hồ âm thanh có chạy không). */
+  async diagnose(): Promise<AudioDiagnosis> {
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession?.type ?? 'không hỗ trợ';
+    if (!this.ctx) return { supported: !!(window.AudioContext ?? (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext), state: 'none', sampleRate: 0, clockRunning: false, session, musicOn: this.wantMusic };
+    const t0 = this.ctx.currentTime;
+    await new Promise((r) => setTimeout(r, 350));
+    return { supported: true, state: this.ctx.state, sampleRate: this.ctx.sampleRate, clockRunning: this.ctx.currentTime > t0, session, musicOn: this.wantMusic };
   }
 
   private mood: MusicMood = 'day';
