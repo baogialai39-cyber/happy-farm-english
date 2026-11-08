@@ -1,0 +1,34 @@
+# Thư viện & bản build (tạo lại bằng npm install / npm run build)
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# Triển khai
+.vercel/
+.netlify/
+
+# Biến môi trường & khóa bí mật — KHÔNG đưa lên GitHub
+.env
+.env.*
+*.local
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Cài đặt cá nhân của công cụ
+.claude/settings.local.json
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Log & rác hệ điều hành
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+.DS_Store
+Thumbs.db

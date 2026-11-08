@@ -1,0 +1,82 @@
+/* =====================================================================
+   GIAI ĐOẠN 8 — HAPPY ZOO (SPEC 19): bản đồ, trạm chăm sóc, Zoo Book, Passport, mini-game sở thú
+   Mọi nút ≥ --btn-min (theo tuổi).
+   ===================================================================== */
+.map-btn .bag-emoji { font-size: calc(var(--btn-min) * 0.45); }
+
+/* ---------- Bản đồ ---------- */
+.map-places { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+.map-place {
+  min-height: calc(var(--btn-min) * 2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border-radius: 24px; border: 5px solid #fff; background: linear-gradient(180deg, #e8f7ff, #d2efff); box-shadow: 0 6px 0 #9ccfee; cursor: pointer;
+}
+.map-place:nth-child(2) { background: linear-gradient(180deg, #fff6dc, #ffe7a8); box-shadow: 0 6px 0 #f2c94c; }
+.map-place.here { outline: 4px dashed #7ed492; }
+.map-place b { font-size: 28px; color: var(--ink); }
+.map-place small { font-size: 18px; color: #7a6a86; }
+.map-emoji { font-size: calc(var(--btn-min) * 0.8); line-height: 1; }
+.map-passport { margin-top: 16px; width: 100%; min-height: var(--btn-min); font-size: 24px; }
+
+/* ---------- Trạm chăm sóc ---------- */
+.care-body { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 8px; }
+.care-ask { margin: 0; font-size: 26px; font-weight: 800; color: var(--ink); text-align: center; }
+.care-animals, .care-foods { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(var(--btn-min), 120px), 1fr)); gap: 12px; width: 100%; }
+.care-animal, .care-food {
+  min-height: calc(var(--btn-min) * 1.2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: #fffaf2; border: 4px solid #fff; border-radius: 20px; box-shadow: 0 5px 0 #d9b38c; cursor: pointer; font-size: calc(var(--btn-min) * 0.7);
+}
+.care-animal b, .care-food b { font-size: 20px; color: #6b4f3a; }
+.care-food-emoji { font-size: calc(var(--btn-min) * 0.6); line-height: 1; }
+.care-food.right { border-color: #7ed492; background: #effff2; box-shadow: 0 5px 0 #5fc77a; }
+.care-food.nope { opacity: 0.5; }
+.care-chosen { display: flex; align-items: center; gap: 12px; font-size: calc(var(--btn-min) * 0.8); }
+.care-chosen .card-btn { width: auto; min-width: var(--btn-min); }
+.care-big { min-height: calc(var(--btn-min) * 1.4); padding: 0 32px; font-size: 28px; display: flex; align-items: center; gap: 12px; }
+.care-big-emoji { font-size: calc(var(--btn-min) * 0.6); }
+
+.clean-field { position: relative; width: 100%; height: max(260px, 40vh); border-radius: 24px; border: 5px solid #fff; overflow: hidden; background: #eadf98; }
+.clean-field.zone-forest { background: #a7d38f; }
+.clean-field.zone-ice { background: #f2f7fc; }
+.clean-field.zone-ocean { background: #3f9bdb; }
+.clean-field.zone-birds { background: #cbefb5; }
+.clean-leaf {
+  position: absolute; width: max(56px, calc(var(--btn-min) * 0.8)); height: max(56px, calc(var(--btn-min) * 0.8));
+  font-size: max(36px, calc(var(--btn-min) * 0.55)); border: 0; background: none; cursor: pointer; transition: transform 0.35s, opacity 0.35s;
+}
+.clean-leaf.gone { transform: scale(0.2) rotate(120deg); opacity: 0; pointer-events: none; }
+.clean-done { position: absolute; inset: 0; display: grid; place-items: center; font-size: 34px; font-weight: 800; color: #2e7d32; background: rgba(255, 255, 255, 0.55); animation: vc-pop 0.4s ease both; }
+
+/* ---------- Passport ---------- */
+.pp-zone { margin: 6px 0 10px; }
+.pp-zone-title { margin: 6px 0; font-size: 22px; font-weight: 800; color: var(--ink); }
+.pp-stamps { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(var(--btn-min), 96px), 1fr)); gap: 10px; }
+.pp-stamp {
+  min-height: var(--btn-min); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; font-size: calc(var(--btn-min) * 0.6);
+  border-radius: 18px; border: 3px dashed #d7ccc8; background: #faf7f2; cursor: pointer;
+}
+.pp-stamp.ok { border: 3px solid #ff8a65; background: #fff3e0; transform: rotate(-3deg); }
+.pp-stamp small { font-size: 15px; color: #6b4f3a; }
+.pp-q { font-size: calc(var(--btn-min) * 0.5); color: #bcaaa4; }
+.pp-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+.pp-badge { min-height: var(--btn-min); display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 8px 12px; border-radius: 18px; border: 3px solid #eee; background: #fafafa; cursor: pointer; }
+.pp-badge span { grid-row: 1 / 3; font-size: 34px; }
+.pp-badge b { font-size: 18px; color: var(--ink); }
+.pp-badge small { font-size: 14px; color: #8a7a96; }
+.pp-badge.got { border-color: #ffd54f; background: #fffbe6; }
+.pp-badge:not(.got) { opacity: 0.7; }
+
+/* ---------- Bảng Play & Learn: 2 nhóm game ---------- */
+.game-section { margin: 10px 0 6px; font-size: 22px; font-weight: 800; color: var(--ink); }
+
+/* ---------- Mini-game sở thú ---------- */
+.mg-crowd { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: min(92vw, 640px); margin: 6px auto; font-size: clamp(40px, 9vw, 72px); }
+.mg-crowd-one { display: inline-flex; animation: vc-pop 0.4s ease both; }
+.mg-num { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.mg-num b { font-size: calc(var(--btn-min) * 0.6); color: #4a72cf; }
+.mg-num small { font-size: 18px; color: #7a6a86; margin-top: 4px; }
+.mg-home-animal { display: flex; flex-direction: column; align-items: center; font-size: calc(var(--btn-min) * 0.6); }
+.mg-home-animal small { font-size: 16px; }
+.mg-home { display: flex; flex-direction: column; align-items: center; }
+.mg-home-emoji { font-size: calc(var(--btn-min) * 0.5); line-height: 1; }
+.mg-home b { font-size: 18px; color: var(--ink); }
+.mg-sum-done { margin: 0; font-size: 24px; font-weight: 700; color: #2e7d32; }

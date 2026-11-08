@@ -1,0 +1,272 @@
+/* =====================================================================
+   GIAI ĐOẠN 3 — giao diện riêng từng cửa hàng (SPEC 14). Nút ≥ --btn-min.
+   ===================================================================== */
+.shop-body { position: relative; z-index: 1; flex: 1; min-height: 0; }
+.shop-decor { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.shop-decor::before, .shop-decor::after { position: absolute; font-size: 64px; opacity: 0.55; }
+.shop-head, .shop-keeper { position: relative; z-index: 1; }
+.keeper-emoji.jump { animation: keeper-jump 0.6s ease-out; }
+@keyframes keeper-jump { 30% { transform: translateY(-26px) rotate(-8deg); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
+.bump { animation: bump 0.45s ease-out; }
+@keyframes bump { 30% { transform: scale(1.18); } 60% { transform: scale(0.95); } }
+.boing { animation: boing 0.45s ease-out; }
+
+/* ----- Nền riêng ----- */
+.shop-accessory {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.7) 6px, transparent 7px) 0 0 / 48px 48px,
+    linear-gradient(180deg, #ffd8e8 0%, #ffeaf3 70%, #f3d2b8 70%, #ecc4a6 100%);
+}
+.shop-accessory .shop-decor::before { content: '👗'; right: 3%; bottom: 6%; }
+.shop-accessory .shop-decor::after { content: '👠'; left: 2%; bottom: 3%; font-size: 48px; }
+.shop-seed {
+  background:
+    repeating-linear-gradient(90deg, rgba(150, 110, 80, 0.12) 0 2px, transparent 2px 90px),
+    linear-gradient(180deg, #dff5d2 0%, #f3fbea 65%, #d9b48e 65%, #c99c74 100%);
+}
+.shop-seed .shop-decor::before { content: '🪴🌷'; right: 2%; bottom: 4%; }
+.shop-seed .shop-decor::after { content: '🚿'; left: 2%; bottom: 4%; font-size: 52px; }
+.shop-market {
+  background:
+    linear-gradient(180deg, #fff1c9 0%, #fff8e3 62%, transparent 62%),
+    repeating-conic-gradient(#ff9b9b 0 25%, #fff 0 50%) 0 0 / 56px 56px;
+}
+.shop-market .shop-decor::before { content: '🍌🍇'; right: 3%; top: 120px; }
+.shop-market .shop-decor::after { content: '🍍'; left: 2%; top: 140px; font-size: 52px; }
+.shop-baking {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.6) 2px, transparent 2px) 0 0 / 40px 40px,
+    linear-gradient(0deg, rgba(255, 255, 255, 0.6) 2px, transparent 2px) 0 0 / 40px 40px,
+    linear-gradient(180deg, #e9e0fb 0%, #f6f1ff 100%);
+}
+.shop-baking .shop-decor::before { content: '🧁🍰'; right: 2%; bottom: 3%; }
+.shop-baking .shop-decor::after { content: '🥖'; left: 2%; bottom: 3%; font-size: 52px; }
+
+/* ----- Tab chung ----- */
+.acc-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.acc-tab {
+  min-width: var(--btn-min);
+  min-height: var(--btn-min);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 20px;
+  font-weight: 800;
+  background: #fff;
+  border: 5px solid #f0e7f6;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 #e7dcef;
+}
+.acc-tab.on { border-color: var(--sel); background: #fff8ec; box-shadow: 0 6px 0 #f0a640; }
+.acc-tab-emoji { font-size: calc(var(--btn-min) * 0.4); line-height: 1; }
+
+/* ----- 1. Boutique: gương thử đồ ----- */
+.dressing { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 22px; align-items: start; }
+.mirror { display: flex; flex-direction: column; align-items: center; gap: 8px; position: sticky; top: 0; }
+.mirror-frame {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border-radius: 50% / 40%;
+  background: radial-gradient(ellipse at 40% 30%, #ffffff, #e6f4ff 60%, #cfe6fa);
+  border: 12px solid #f7c6d9;
+  box-shadow: 0 0 0 6px #fff, 0 14px 30px rgba(90, 60, 110, 0.2);
+}
+.mirror-art { width: 82%; }
+.mirror-art .character { width: 100%; height: auto; }
+.mirror-art.sparkle { animation: sparkle 0.5s ease-out; }
+@keyframes sparkle { 40% { transform: scale(1.06); filter: brightness(1.15); } }
+.mirror-label { margin: 0; min-height: 1.3em; font-size: 26px; font-weight: 800; color: #ef7fa6; text-align: center; }
+.acc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  border: 5px solid #f0e7f6;
+  border-radius: 26px;
+  box-shadow: 0 7px 0 #e7dcef;
+}
+.acc-card.trying { border-color: #8ec5fc; box-shadow: 0 7px 0 #6fa6dd; }
+.acc-card.wearing { border-color: var(--sel); box-shadow: 0 7px 0 #f0a640; }
+.acc-tap { min-height: var(--btn-min); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.acc-swatch {
+  width: calc(var(--btn-min) * 0.75);
+  height: calc(var(--btn-min) * 0.75);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--btn-min) * 0.42);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--sw) 70%);
+  border: 4px solid #fff;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+.acc-word { font-size: 24px; font-weight: 800; text-align: center; line-height: 1.05; }
+
+/* ----- 2. Seed Shop: gói hạt ----- */
+.packet-card { display: flex; flex-direction: column; gap: 10px; }
+.packet {
+  position: relative;
+  min-height: calc(var(--btn-min) * 1.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8px 12px;
+  background: linear-gradient(180deg, #f7e7cc, #ead2ab);
+  border-radius: 10px 10px 22px 22px;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 0 #c9a77f, 0 14px 20px rgba(90, 60, 30, 0.18);
+  overflow: hidden;
+}
+.packet::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 10px; background: repeating-linear-gradient(90deg, #fff 0 6px, transparent 6px 12px); opacity: 0.8; }
+.packet-band { width: calc(100% + 16px); margin-top: 10px; padding: 4px 0; text-align: center; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; color: #fff; background: var(--band); }
+.packet-art { font-size: calc(var(--btn-min) * 0.62); line-height: 1.2; filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.15)); }
+.packet-word { font-size: 26px; font-weight: 800; color: #5a3a10; }
+.packet-info { font-size: 18px; font-weight: 700; color: #8a6a4a; }
+
+/* ----- 3. Fruit Market: sạp + hoạt ảnh bán ----- */
+.stand { display: grid; grid-template-columns: 1fr minmax(180px, 260px); gap: 20px; align-items: start; }
+.basket { padding: 16px; background: rgba(255, 255, 255, 0.85); border: 6px dashed #e6b980; border-radius: 30px; }
+.basket h3, .mix-right h3 { margin: 0 0 12px; font-size: 28px; }
+.basket-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 24px;
+  border: 5px solid #fbe3c2;
+  box-shadow: 0 7px 0 #f2cf9c;
+}
+.basket-emoji { min-width: var(--btn-min); min-height: var(--btn-min); font-size: calc(var(--btn-min) * 0.6); line-height: 1; }
+.basket-word { font-size: 24px; font-weight: 800; }
+.counter {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 16px;
+  background: linear-gradient(180deg, #d9a679, #b88356);
+  border-radius: 26px;
+  border: 6px solid #fff;
+  box-shadow: 0 10px 0 #9a6b44;
+}
+.scale { position: relative; display: grid; place-items: center; width: 150px; height: 150px; background: #fff; border-radius: 50%; box-shadow: inset 0 -8px 0 #eee; }
+.scale-emoji { font-size: 80px; }
+.cashbox { font-size: 64px; width: 120px; height: 90px; display: grid; place-items: center; background: #ffe08a; border-radius: 18px; border: 5px solid #fff; }
+.flyer {
+  position: absolute;
+  z-index: 50;
+  font-size: 64px;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.2));
+}
+.flyer.coin-flyer { font-size: 38px; font-weight: 800; color: #b07b00; background: #fff8dc; padding: 6px 16px; border-radius: 999px; border: 4px solid #fff; }
+
+/* ----- 4. Bakery: hũ nguyên liệu + quầy trộn ----- */
+.jar-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; background: rgba(255, 255, 255, 0.85); border-radius: 24px; }
+.jar {
+  position: relative;
+  width: calc(var(--btn-min) * 1.05);
+  height: calc(var(--btn-min) * 1.15);
+  display: grid;
+  place-items: center;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(220, 235, 255, 0.7) 40%, rgba(255, 255, 255, 0.9));
+  border: 5px solid #dfe9f7;
+  border-radius: 26px 26px 30px 30px;
+  box-shadow: 0 8px 0 #c5d3e8;
+}
+.jar-lid { position: absolute; top: -14px; left: 14%; right: 14%; height: 18px; background: #c3b1e1; border-radius: 10px; }
+.jar-emoji { font-size: calc(var(--btn-min) * 0.55); }
+.jar-word { font-size: 24px; font-weight: 800; }
+.bakery-tabs .acc-tab { flex-direction: row; gap: 10px; padding: 6px 26px; font-size: 26px; }
+.mix-counter { display: grid; grid-template-columns: minmax(260px, 1fr) 1.3fr; gap: 20px; align-items: start; }
+.mix-left { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; background: #fff; border-radius: 30px; box-shadow: 0 8px 0 #e3d9f5; }
+.bowl { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bowl.stir { animation: stir 0.9s ease-in-out; }
+@keyframes stir { 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(4deg); } }
+.bowl-emoji { font-size: calc(var(--btn-min) * 0.9); line-height: 1; }
+.bowl-items { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.bowl-chip, .bowl-slot {
+  width: calc(var(--btn-min) * 0.62);
+  height: calc(var(--btn-min) * 0.62);
+  min-width: 64px;
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 34px;
+}
+.bowl-chip { background: #fff8ec; border: 4px solid var(--sel); }
+.bowl-slot { border: 4px dashed #e3d9f5; }
+.mix-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.mix-btn { padding: 0 24px; }
+.mix-right { padding: 16px; background: rgba(255, 255, 255, 0.85); border-radius: 30px; }
+.pantry { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--btn-min), 1fr)); gap: 12px; }
+.pantry-btn {
+  position: relative;
+  min-height: var(--btn-min);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 5px solid #f0e7f6;
+  border-radius: 22px;
+  box-shadow: 0 6px 0 #e7dcef;
+}
+.pantry-emoji { font-size: calc(var(--btn-min) * 0.42); }
+.pantry-word { font-size: 18px; font-weight: 800; }
+.made-pop {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  top: 45%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 40px;
+  background: #fff;
+  border: 8px solid #ffe08a;
+  border-radius: 40px;
+  box-shadow: 0 20px 40px rgba(90, 60, 110, 0.3);
+  transform: translate(-50%, -50%);
+  animation: made-pop 1.8s ease-out both;
+  pointer-events: none;
+}
+.made-pop span { font-size: 120px; line-height: 1.1; }
+.made-pop b { font-size: 40px; color: #ef7fa6; }
+@keyframes made-pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); } }
+.recipe-list { display: flex; flex-direction: column; gap: 12px; }
+.recipe-row { display: grid; grid-template-columns: minmax(150px, auto) auto 1fr minmax(160px, auto); align-items: center; gap: 12px; padding: 8px 12px; background: #fff; border-radius: 22px; border: 4px solid #f0e7f6; }
+.recipe-row.ok { border-color: #bfe8c8; }
+.recipe-out { min-height: var(--btn-min); display: flex; align-items: center; gap: 8px; font-size: 22px; }
+.recipe-out span { font-size: 54px; }
+.recipe-eq { font-size: 34px; font-weight: 800; color: var(--ink-soft); }
+.recipe-need { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .dressing, .stand, .mix-counter { grid-template-columns: 1fr; }
+  .mirror { position: static; flex-direction: row; }
+  .mirror-frame { width: 150px; }
+  .counter { position: static; flex-direction: row; justify-content: center; }
+  .recipe-row { grid-template-columns: 1fr; }
+}
+
+/* lưới thẻ gọn hơn trong cửa hàng để vừa một hàng */
+.shop-body .card-grid { grid-template-columns: repeat(auto-fill, minmax(max(var(--btn-min), 140px), 1fr)); }
+.shop-body .card-btn { font-size: 22px; padding: 0 8px; }
+
+.shop-body .card-btn { white-space: nowrap; }

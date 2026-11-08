@@ -1,0 +1,112 @@
+/* =====================================================================
+   GIAI ĐOẠN 6 — ngày & đêm, kết thúc ngày, nông trại đang ngủ (SPEC 17)
+   Chuyển động chậm, không nhấp nháy mạnh (A8); không đếm ngược số giây (A10).
+   ===================================================================== */
+.hud-left { display: flex; gap: 12px; align-items: center; }
+
+/* Ô trời trên HUD: mặt trời đi theo cung rồi lặn */
+.sky-pill {
+  position: relative;
+  width: calc(var(--btn-min) * 1.5);
+  height: calc(var(--btn-min) * 0.7);
+  min-width: 120px;
+  min-height: 60px;
+  border: 5px solid #fff;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(90, 60, 110, 0.18);
+  transition: background 2s;
+}
+.sky-pill.phase-day { background: linear-gradient(180deg, #9fd4ff, #d9f0ff); }
+.sky-pill.phase-sunset { background: linear-gradient(180deg, #ffb38a, #ffd6a5 60%, #ffc0cb); }
+.sky-pill.phase-dusk, .sky-pill.phase-night { background: linear-gradient(180deg, #3b3a78, #6b5fa8); }
+.sky-orb { position: absolute; font-size: 26px; line-height: 1; transform: translate(-50%, -50%); transition: left 1s linear, top 1s linear; }
+.sky-day {
+  position: absolute;
+  right: 10px;
+  bottom: 2px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #4a3b55;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0 8px;
+  border-radius: 999px;
+}
+
+/* Màn kết thúc ngày */
+.day-end {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: #2b2a5c;
+  animation: day-end-in 1.6s ease-out both;
+}
+@keyframes day-end-in { from { opacity: 0; } to { opacity: 1; } }
+.day-end-art { position: absolute; inset: 0; }
+.day-end-art .night-farm { width: 100%; height: 100%; display: block; }
+.night-farm .twinkle { animation: twinkle 4s ease-in-out infinite; }
+.night-farm .firefly { animation: firefly 6s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes firefly { 0%, 100% { transform: translate(0, 0); opacity: 0.4; } 50% { transform: translate(18px, -14px); opacity: 1; } }
+.day-end-card {
+  position: relative;
+  z-index: 1;
+  margin: max(20px, env(safe-area-inset-top)) 16px 0;
+  max-width: 760px;
+  padding: 16px 32px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 6px solid #fff;
+  border-radius: 40px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  animation: pop-in 0.6s 0.6s ease-out both;
+}
+.day-end-title { margin: 0; font-size: clamp(30px, 4.4vw, 52px); font-weight: 800; color: #5e4f8c; line-height: 1.15; }
+.day-end-en { margin: 0; font-size: clamp(22px, 2.6vw, 30px); font-weight: 700; color: #7a6a86; }
+.day-end-bottom { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: max(22px, env(safe-area-inset-bottom)); }
+.day-end-note { margin: 0; padding: 2px 16px; font-size: 20px; font-weight: 700; color: #fff; background: rgba(43, 42, 92, 0.6); border-radius: 999px; }
+.goodnight-btn { margin-top: 4px; padding: 0 48px; font-size: clamp(32px, 4vw, 46px); animation: breathe 2.8s ease-in-out infinite; }
+
+/* Màn chào lại: nông trại đang ngủ */
+.sleep-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 22px;
+  background: linear-gradient(180deg, #4b4a8c, #6b5fa8);
+  color: #fff;
+  border-radius: 28px;
+  border: 5px solid #fff;
+}
+.sleep-moon { font-size: 54px; line-height: 1; }
+.sleep-box b { font-size: 32px; }
+.sleep-en { font-size: 22px; font-weight: 700; opacity: 0.9; }
+.sleep-box small { margin-top: 6px; font-size: 17px; font-weight: 600; opacity: 0.85; }
+.character.sleepy { animation: none; filter: saturate(0.7) brightness(0.92); }
+
+/* Khu phụ huynh — thời gian */
+.pt { display: flex; flex-direction: column; gap: 14px; font-family: var(--font); }
+.pt-info { margin: 0; font-size: 20px; font-weight: 700; color: var(--ink-soft); }
+.pt-status { margin: 0; padding: 10px 16px; font-size: 21px; font-weight: 700; background: #f6f1ff; border-radius: 18px; }
+.pt-row { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr auto; align-items: center; gap: 14px; font-size: 20px; font-weight: 700; }
+.pt-row input[type='range'] { width: 100%; height: 40px; accent-color: #a48be0; }
+.pt-row b { min-width: 170px; font-size: 19px; }
+.pt-note { margin: 0; font-size: 17px; color: var(--ink-soft); line-height: 1.4; }
+.pt-actions { display: flex; gap: 14px; justify-content: flex-end; flex-wrap: wrap; }
+.pt-btn { min-height: 72px; font-size: 22px; padding: 0 24px; }
+.pt-saved { margin: 0; min-height: 1.2em; font-size: 18px; font-weight: 700; color: #3fa65d; }
+.parent-btn { opacity: 0.85; }
+
+@media (max-width: 700px) {
+  .pt-row { grid-template-columns: 1fr; }
+  .sky-pill { min-width: 96px; }
+}
