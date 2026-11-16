@@ -5,6 +5,7 @@
 import { artPicture } from '../art/library';
 import { pluralAnimal, ZOO, ZOO_BADGES, ZOO_FOODS, ZOO_TOPICS, ZOO_ZONES, type ZooZone, zooOfZone } from '../content/zoo';
 import { resolveVocab } from '../content/vocab';
+import { ZOO_TICKET_PRICE } from '../content/items';
 import { h } from '../ui/dom';
 import { openPanel, pagedGrid, wordCard } from '../ui/panel';
 import type { WorldApi } from './interactions';
@@ -209,7 +210,10 @@ export function openMap(api: WorldApi, here: 'farm' | 'zoo', go: (place: 'farm' 
   const p = openPanel(api.host, { title: 'Map', emoji: '🗺️', className: 'zoo-map', onClose: () => api.pause(false) });
   const place = (id: 'farm' | 'zoo', emoji: string, title: string, vi: string) => {
     const b = h('button', { class: `map-place${id === here ? ' here' : ''}`, 'aria-label': title },
-      h('span', { class: 'map-emoji' }, emoji), h('b', {}, title), h('small', {}, id === here ? '📍 You are here' : vi));
+      h('span', { class: 'map-emoji' }, emoji), h('b', {}, title),
+      h('small', {}, id === here ? '📍 You are here' : vi),
+      // vé sở thú 30 xu / lượt (SPEC 21.6)
+      id === 'zoo' && id !== here ? h('span', { class: 'map-ticket' }, api.save.zooTicket ? '🎟️ ✓' : `🎟️ ${ZOO_TICKET_PRICE} 🪙`) : '');
     b.addEventListener('click', () => {
       api.audio.pop();
       if (id === here) return api.say(title);

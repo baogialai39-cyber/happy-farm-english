@@ -150,6 +150,22 @@ const DEFS: Record<string, Def> = {
   pan: { w: 100, h: 100, draw: (a) => `<ellipse cx="40" cy="54" rx="34" ry="26" fill="${a.ball('#424242', 0.3, -0.3)}" ${edge('#212121')}/><ellipse cx="40" cy="52" rx="26" ry="19" fill="#616161"/><rect x="70" y="48" width="28" height="9" rx="4" fill="${a.side('#5D4037')}" transform="rotate(-15 70 52)"/>${shine(30, 44, 8, 4, -10, 0.25)}` },
   pot: { w: 100, h: 100, draw: (a) => `<rect x="16" y="34" width="68" height="54" rx="10" fill="${a.side('#B0BEC5', 0.3, -0.2)}" ${edge('#607D8B')}/><rect x="10" y="28" width="80" height="10" rx="5" fill="#90A4AE" ${edge('#607D8B', 1.5)}/><rect x="40" y="18" width="20" height="10" rx="5" fill="#607D8B"/>
       <rect x="2" y="48" width="14" height="8" rx="4" fill="#607D8B"/><rect x="84" y="48" width="14" height="8" rx="4" fill="#607D8B"/>${shine(30, 60, 4, 16, 0, 0.35)}` },
+  // ---- HOME DECOR SHOP (giai đoạn 10, SPEC 21.2) ----
+  painting: { w: 100, h: 84, draw: (a) => `<rect x="6" y="6" width="88" height="72" rx="6" fill="${a.side('#C68A52', 0.25, -0.2)}" ${edge('#8D5A2B', 3)}/>
+      <rect x="16" y="16" width="68" height="52" rx="2" fill="${a.lin([[0, '#81D4FA'], [1, '#E1F5FE']])}"/>
+      <path d="M16 56 Q34 36 50 52 Q64 40 84 54 V68 H16Z" fill="#66BB6A"/><path d="M16 62 Q40 52 84 62 V68 H16Z" fill="#43A047"/>
+      <circle cx="68" cy="28" r="7" fill="#FFD54F"/><path d="M30 30 q6 -5 12 0 q6 -5 12 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle cx="50" cy="4" r="3" fill="#8D5A2B"/><path d="M24 6 L50 3 L76 6" stroke="#8D5A2B" stroke-width="2" fill="none"/>` },
+  rug: { w: 200, h: 90, draw: (a) => `<ellipse cx="100" cy="50" rx="94" ry="36" fill="${a.ball('#BA68C8', 0.3, -0.15)}" ${edge('#8E24AA', 3)}/>
+      <ellipse cx="100" cy="50" rx="74" ry="26" fill="none" stroke="#F8BBD0" stroke-width="6"/>
+      <ellipse cx="100" cy="50" rx="44" ry="14" fill="#FFF59D" opacity=".85"/>
+      ${[20, 50, 80, 120, 150, 180].map((x) => `<path d="M${x} 84 v6" stroke="#8E24AA" stroke-width="3"/>`).join('')}` },
+  'flower pot': { w: 100, h: 130, draw: (a) => `${groundShadow(50, 127, 30, 5)}
+      <path d="M28 82 L72 82 L64 126 L36 126Z" fill="${a.side('#E07A3F', 0.25, -0.2)}" ${edge('#BF5A1E')}/>
+      <rect x="24" y="76" width="52" height="10" rx="4" fill="#F08A50" ${edge('#BF5A1E', 2)}/>
+      <path d="M50 78 V36 M50 60 Q34 50 30 36 M50 56 Q66 46 70 32" stroke="#43A047" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="34" cy="64" rx="10" ry="5" fill="#66BB6A" transform="rotate(-30 34 64)"/><ellipse cx="66" cy="62" rx="10" ry="5" fill="#66BB6A" transform="rotate(30 66 62)"/>
+      ${[[50, 30, '#FF4081'], [30, 32, '#FFCA28'], [70, 28, '#7C4DFF']].map(([x, y, c]) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map((r) => `<ellipse rx="5" ry="9" transform="rotate(${r}) translate(0 -8)" fill="${c}"/>`).join('')}<circle r="5" fill="#FFF59D"/></g>`).join('')}` },
 };
 
 export const HOUSEHOLD_IDS = Object.keys(DEFS);

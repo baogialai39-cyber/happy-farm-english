@@ -4,7 +4,10 @@
 import { type AppCtx, iconButton, musicToggle } from '../app';
 import { AGE_RULES, ageGroupFor, allowsJoystick, applyAgeRulesToCss } from '../config/ageRules';
 import { getCharacter, withOnesie } from '../content/characters';
-import { ANIMALS, ITEMS, SHOPS, type ShopId } from '../content/items';
+import { ANIMALS, FURNITURE_BY_ID, type FurnitureDef, ITEMS, SHOPS, type ShopId, ZOO_TICKET_PRICE } from '../content/items';
+import { furnitureObject, inHouse, validSpots } from '../world/furniture';
+import { buyZooTicket, endZooVisit, moveFurniture, placeFurniture, storeFurniture } from '../world/save';
+import { artPicture } from '../art/library';
 import { speak } from '../systems/speech';
 import { Teacher } from '../learning/teacher';
 import {
@@ -27,7 +30,7 @@ import { zooTap, type ZooReward } from '../world/save';
 import { ZOO_BADGES, type ZooZone } from '../content/zoo';
 import { animalBox, FALL_MS, fruitAt, fruitRadius, furnitureBox, preloadWorldArt, treeGeom, treePoint } from '../world/renderArt';
 import { fruitRipe, harvestFruit } from '../world/save';
-import { countLabel, countSentence, countVi } from '../content/counting';
+import { countNumberOnly } from '../content/counting';
 import type { ScreenRect } from '../learning/teacher';
 import { type WorldSave, backupSave, activeDecor, applyUnlocks, count, ensureQuests, loadSave, plotStage, questEvent, storeSave } from '../world/save';
 import { claimableCount, openHub } from '../world/hub';
@@ -101,7 +104,10 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
   ensureQuests(save, group);
   let decorOn = activeDecor(save);
   const isActive = (o: WorldObject) => !o.decor || decorOn.has(o.decor);
-  let grid = new Grid(MAP, isActive);
+  /** Đồ nội thất bé đã đặt trong nhà (SPEC 21.3) — chỉ có ở nông trại. */
+  const placedObjects = (): WorldObject[] => (isZoo ? [] : save.furniture.placed.filter((p) => FURNITURE_BY_ID.has(p.id)).map(furnitureObject));
+  const allObjects = (): WorldObject[] => [...MAP.objects.filter(isActive), ...placedObjects()];
+  let grid = new Grid({ ...MAP, objects: allObjects() });
   const startPos = isZoo ? save.zooPos : save.pos;
   const start = startPos && !grid.boxHits(startPos.x, startPos.y) ? startPos : MAP.spawn;
   const player = new Player(start.x, start.y);
@@ -109,8 +115,13 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
 
   const st: RenderState = { save, now: Date.now(), lampOn: true, fedAt: {} };
   const ground = buildGround(MAP);
-  const activeMap = () => ({ ...MAP, objects: MAP.objects.filter(isActive) });
+  const activeMap = () => ({ ...MAP, objects: allObjects() });
   let statics = buildStatics(activeMap(), st);
+  /** Dựng lại va chạm + hình tĩnh (sau khi mở khóa trang trí / đặt / dời / cất đồ nội thất). */
+  const rebuildWorld = () => {
+    grid = new Grid(activeMap());
+    statics = buildStatics(activeMap(), st);
+  };
 
   // ---------- DOM ----------
   const canvas = h('canvas', { class: 'world-canvas', 'aria-label': 'Farm world' });
@@ -278,6 +289,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
       paintCoins();
     },
     refreshLook: () => player.setLook(character, save.equipped),
+    saveNow: () => persist(),
     anchorEl: (el: HTMLElement) => teacher.setAnchor(() => {
       const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect();
       return { x: r.left - rr.left, y: r.top - rr.top, w: r.width, h: r.height };
@@ -319,8 +331,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
     for (const u of list) {
       if (u.kind === 'decor') {
         decorOn = activeDecor(save);
-        grid = new Grid(MAP, isActive);
-        statics = buildStatics(activeMap(), st);
+        rebuildWorld();
       }
       ctx.audio.fanfare();
       const pop = h('div', { class: 'unlock-pop' },
@@ -361,7 +372,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
 
   /** Đồ vật tương tác: cố định + cây đã trồng + ô đất trống bé đang đứng (SPEC 14.3). */
   const interactables = (): WorldObject[] => {
-    const list = MAP.objects.filter((o) => isActive(o) && o.kind !== 'zoo');
+    const list = allObjects().filter((o) => o.kind !== 'zoo');
     if (isZoo) return list;
     for (const k of Object.keys(save.plots)) {
       const pos = parsePlotKey(k);
@@ -440,7 +451,8 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
       ctx.audio.coin();
       player.act('🧺', Date.now());
       teacher.setAnchor(anchorWorld(basket));
-      teacher.count(kind, countLabel(kind, n), countSentence(kind, n), countVi(kind, n), ITEM_BY_ID.get(kind)?.emoji ?? '🧺');
+      const c = countNumberOnly(n); // F-228: chỉ đọc số đếm ("One!"), không kèm tên quả
+      teacher.count(kind, c.label, c.say, c.vi, ITEM_BY_ID.get(kind)?.emoji ?? '🧺');
     }, FALL_MS * 0.8);
   };
 
@@ -502,6 +514,26 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
   let traveled = false;
   const travel = async (place: 'farm' | 'zoo') => {
     if (place === (isZoo ? 'zoo' : 'farm') || ended) return;
+    if (place === 'zoo') {
+      // VÉ SỞ THÚ 30 xu / lượt (SPEC 21.6) — đã có vé cho lượt này thì không trừ lại
+      const r = buyZooTicket(save);
+      if (r === 'coins') {
+        ctx.audio.hmm();
+        sayText(`You need ${ZOO_TICKET_PRICE} coins to visit the zoo!`);
+        showNote(`🎟️ You need ${ZOO_TICKET_PRICE} coins to visit the zoo!`, `Bé cần ${ZOO_TICKET_PRICE} xu để mua vé vào sở thú (bé đang có ${save.coins} xu). Hãy trồng và bán thêm nông sản nhé! 🌱`);
+        return;
+      }
+      if (r === 'bought') {
+        dirty = true;
+        paintCoins();
+        ctx.audio.coin();
+        const pop = h('div', { class: 'unlock-pop ticket-pop' }, h('p', { class: 'unlock-new' }, 'TICKET!'), h('span', { class: 'unlock-emoji' }, '🎟️'), h('b', {}, 'Happy Zoo'), h('small', {}, `−${ZOO_TICKET_PRICE} 🪙`));
+        root.append(pop);
+        sayText("Ticket! Let's visit the zoo!");
+        await new Promise((r2) => setTimeout(r2, 1600));
+        pop.remove();
+      }
+    } else endZooVisit(save); // về nông trại: vé lượt này hết hiệu lực
     paused = true;
     teacher.hide();
     await persist(); // lưu vị trí ở nơi hiện tại
@@ -539,6 +571,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
       api.learn('zoo');
       return openMap(api, 'zoo', (pl) => void travel(pl));
     }
+    if (o.action === 'placed') return openPlaced(o);
     teacher.setAnchor(anchorWorld(() => pickRect(o)));
     void interact(api, o);
   };
@@ -568,6 +601,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
     if (paused) return;
     const wx = (sx - view.w / 2) / cam.scale + cam.x;
     const wy = (sy - view.h / 2) / cam.scale + cam.y;
+    if (placing) return placeAt(wx, wy); // đang đặt đồ nội thất
     // quả trên cây được ưu tiên (vùng chạm riêng từng quả)
     // sở thú: chạm con vật từ ngoài rào (không cần đi vào chuồng — SPEC 19.4)
     const zooHit = herd?.hit(wx, wy);
@@ -688,19 +722,144 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
     if (near) doInteract(near);
   });
 
+  /** Thông báo to, dễ hiểu: câu tiếng Anh + giải thích tiếng Việt (SPEC 21). */
+  const showNote = (en: string, vi: string) => {
+    questToast.replaceChildren(h('b', {}, en), h('small', { class: 'toast-vi' }, vi));
+    questToast.hidden = false;
+    questToast.classList.remove('pop');
+    void questToast.offsetWidth;
+    questToast.classList.add('pop');
+    window.setTimeout(() => (questToast.hidden = true), 5200);
+  };
+
   // ---------- Túi đồ ----------
   const openBag = () => {
     ctx.audio.pop();
     api.pause(true);
     const items = ITEMS.filter((i) => count(save, i.id) > 0);
-    openPanel(root, { title: 'My Bag', emoji: '🎒', onClose: () => api.pause(false) },
+    const furn = Object.entries(save.furniture.inv).filter(([id, n]) => n > 0 && FURNITURE_BY_ID.has(id));
+    const bagNote = h('p', { class: 'shop-note', 'aria-live': 'polite' });
+    const panelRef = openPanel(root, { title: 'My Bag', emoji: '🎒', onClose: () => api.pause(false) },
       h('p', { class: 'bag-coins' }, `🪙 ${save.coins} coins`),
       pagedGrid(
-        items.map((i) => wordCard({ emoji: i.emoji, word: i.word, sub: i.kind === 'seed' ? '🌱 seeds' : undefined, badge: `×${count(save, i.id)}`, onTap: () => api.learn(i.word) })),
+        items.map((i) => wordCard({ emoji: i.emoji, word: i.word, sub: i.kind === 'seed' ? (i.special ? '✨ special seeds' : '🌱 seeds') : i.kind === 'toy' ? '🎁 reward' : undefined, badge: `×${count(save, i.id)}`, onTap: () => api.learn(i.word) })),
         rules.maxChoices,
         emptyNote('🎒', 'Empty bag!'),
       ),
+      // Kho nội thất (SPEC 21.3): PLACE khi đang ở trong nhà
+      h('h3', { class: 'bag-section' }, '🛋️ My furniture'),
+      bagNote,
+      furn.length
+        ? pagedGrid(furn.map(([id, n]) => {
+          const d = FURNITURE_BY_ID.get(id)!;
+          const place = h('button', { class: 'btn btn-green card-btn' }, '📍 PLACE');
+          place.addEventListener('click', () => {
+            ctx.audio.pop();
+            if (isZoo || !inHouse(MAP, player.x, player.y)) {
+              sayText('Go into your house first!');
+              bagNote.textContent = 'Bé hãy đi vào trong nhà rồi bấm PLACE để đặt đồ nhé! 🏠';
+              return;
+            }
+            panelRef.close();
+            startPlacing(d);
+          });
+          return wordCard({ emoji: d.emoji, word: d.word, sub: d.vi, badge: `×${n}`, onTap: () => api.learn(d.word), action: place });
+        }), rules.maxChoices)
+        : emptyNote('🛋️', 'Buy furniture at the Home Decor Shop!'),
     );
+  };
+
+  // ---------- TRANG TRÍ NHÀ: đặt / dời / cất đồ nội thất (SPEC 21.3) ----------
+  let placing: { def: FurnitureDef; uid?: number; spots: { x: number; y: number }[]; focus: { x: number; y: number } } | null = null;
+  const placeBanner = h('div', { class: 'place-banner', hidden: true, 'aria-live': 'polite' });
+  const stopPlacing = () => {
+    placing = null;
+    placeBanner.hidden = true;
+  };
+  const startPlacing = (def: FurnitureDef, uid?: number) => {
+    const others = allObjects().filter((o) => o.uid === undefined || o.uid !== uid);
+    const spots = validSpots(MAP, others, def, { x: player.x, y: player.y });
+    if (!spots.length) {
+      ctx.audio.hmm();
+      sayText('There is no space!');
+      showNote('There is no space!', 'Nhà hết chỗ trống cho món này. Hãy cất bớt đồ (chạm vào đồ → PUT AWAY) rồi thử lại.');
+      return;
+    }
+    teacher.hide();
+    player.path = [];
+    pendingObj = undefined;
+    // camera dời tới các ô xanh gần bé nhất (tranh treo tường ở mép trên vẫn nhìn thấy được)
+    const near6 = [...spots].sort((a, b) => Math.hypot(a.x - player.x, a.y - player.y) - Math.hypot(b.x - player.x, b.y - player.y)).slice(0, 6);
+    const focus = {
+      x: near6.reduce((n, sp) => n + sp.x + def.w / 2, 0) / near6.length,
+      y: near6.reduce((n, sp) => n + sp.y + def.h / 2, 0) / near6.length,
+    };
+    placing = { def, uid, spots, focus };
+    const cancel = h('button', { class: 'btn btn-soft card-btn' }, '✖ CANCEL');
+    cancel.addEventListener('click', () => {
+      ctx.audio.pop();
+      stopPlacing();
+    });
+    placeBanner.replaceChildren(
+      h('span', { class: 'place-pic' }, artPicture(def.word, 'art-pic') ?? def.emoji),
+      h('span', { class: 'place-text' }, h('b', {}, def.wall ? `Tap a green spot on the wall for the ${def.word}!` : `Tap a green square to place the ${def.word}!`),
+        h('small', {}, def.wall ? `Chạm vào ô xanh trên tường để treo ${def.vi.toLowerCase()}.` : `Chạm vào ô xanh trên sàn để đặt ${def.vi.toLowerCase()}.`)),
+      cancel,
+    );
+    placeBanner.hidden = false;
+    sayText(`Where does the ${def.word} go?`);
+  };
+  /** Chạm khi đang đặt đồ: ô xanh → đặt; ô khác → nhắc nhẹ. */
+  const placeAt = (wx: number, wy: number) => {
+    if (!placing) return;
+    const { def, uid, spots } = placing;
+    const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
+    const hit = (dy: number) => spots.find((sp) => tx >= sp.x && tx < sp.x + def.w && ty + dy >= sp.y && ty + dy < sp.y + def.h);
+    const spot = hit(0) ?? (def.wall ? hit(-1) : undefined); // tranh: chạm ngay dưới tường cũng được
+    if (!spot) {
+      ctx.audio.hmm();
+      sayText('Not here!');
+      placeBanner.querySelector('small')!.textContent = 'Ô này không đặt được — hãy chọn ô màu xanh nhé.';
+      return;
+    }
+    const ok = uid !== undefined ? moveFurniture(save, uid, spot.x, spot.y) : !!placeFurniture(save, def.id, spot.x, spot.y);
+    if (!ok) return stopPlacing();
+    stopPlacing();
+    rebuildWorld();
+    dirty = true;
+    void persist();
+    ctx.audio.chime();
+    player.act('😊', Date.now(), 1100, 'happy');
+    const placed = allObjects().find((o) => o.uid !== undefined && o.x === spot.x && o.y === spot.y);
+    if (placed) teacher.setAnchor(anchorWorld(() => pickRect(placed)));
+    api.learn(def.word);
+  };
+  /** Chạm đồ đã đặt: tên + MOVE / PUT AWAY. */
+  const openPlaced = (o: WorldObject) => {
+    const rec = save.furniture.placed.find((p) => p.uid === o.uid);
+    const def = rec && FURNITURE_BY_ID.get(rec.id);
+    if (!rec || !def) return;
+    teacher.setAnchor(anchorWorld(() => pickRect(o)));
+    api.learn(def.word);
+    api.pause(true);
+    const move = h('button', { class: 'btn btn-blue card-btn' }, '↔ MOVE');
+    const away = h('button', { class: 'btn btn-soft card-btn' }, '📦 PUT AWAY');
+    const pnl = openPanel(root, { title: def.word, emoji: def.emoji, onClose: () => api.pause(false) },
+      h('div', { class: 'placed-panel' }, h('span', { class: 'placed-pic' }, artPicture(def.word, 'art-pic') ?? def.emoji), h('p', {}, def.vi), h('div', { class: 'placed-actions' }, move, away)));
+    move.addEventListener('click', () => {
+      ctx.audio.pop();
+      pnl.close();
+      startPlacing(def, rec.uid);
+    });
+    away.addEventListener('click', () => {
+      ctx.audio.pop();
+      storeFurniture(save, rec.uid);
+      rebuildWorld();
+      dirty = true;
+      void persist();
+      pnl.close();
+      sayText('Put away!');
+    });
   };
 
   // ---------- Kích thước ----------
@@ -897,8 +1056,9 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
 
     // camera mượt theo nhân vật
     const k = Math.min(1, dt * 7);
-    cam.x += (player.x * T - cam.x) * k;
-    cam.y += (player.y * T - 30 - cam.y) * k;
+    const camTarget = placing ? { x: (placing.focus.x + player.x) / 2, y: placing.focus.y + 0.6 } : player;
+    cam.x += (camTarget.x * T - cam.x) * k;
+    cam.y += (camTarget.y * T - 30 - cam.y) * k;
     clampCam();
 
     // đồ vật gần + nút tương tác
@@ -951,6 +1111,19 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
   };
 
   const drawOverlay = (cc: CanvasRenderingContext2D, t: number) => {
+    // đang đặt đồ: tô xanh các ô đặt được (không nhấp nháy nhanh — A8)
+    if (placing) {
+      const a = 0.32 + Math.sin(t / 600) * 0.08;
+      for (const sp of placing.spots) {
+        cc.fillStyle = `rgba(102, 220, 120, ${a})`;
+        cc.strokeStyle = 'rgba(255,255,255,.9)';
+        cc.lineWidth = 3;
+        cc.beginPath();
+        cc.roundRect(sp.x * T + 4, sp.y * T + 4, placing.def.w * T - 8, placing.def.h * T - 8, 10);
+        cc.fill();
+        cc.stroke();
+      }
+    }
     // khung nét đứt: ô đất trống bé đang đứng có thể trồng
     const ptx = Math.floor(player.x), pty = Math.floor(player.y);
     if (!paused && isPlantable(MAP, ptx, pty) && !save.plots[plotKey(ptx, pty)]) {
@@ -1043,6 +1216,7 @@ export async function worldScene(ctx: AppCtx, route: { profileId: string }): Pro
     ),
     zonePill,
     questToast,
+    placeBanner,
     ...(joy ? [joy] : []),
     interactBtn,
   );

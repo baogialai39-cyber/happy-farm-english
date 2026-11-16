@@ -1,16 +1,17 @@
 /**
- * Bên trong 4 cửa hàng (SPEC 13.5, 14.1–14.5). Mỗi cửa hàng một giao diện riêng.
+ * Bên trong 5 cửa hàng (SPEC 13.5, 14.1–14.5, 21.2). Mỗi cửa hàng một giao diện riêng.
  * Chỉ dùng xu nông trại kiếm trong game — không có tiền thật (CLAUDE.md A3).
  */
 import { characterSvg, type AccessoryLayer } from '../art/character';
 import { ONESIES } from '../content/characters';
 import {
-  ACCESSORIES, ACCESSORY_TABS, type AccessorySlot, ITEM_BY_ID, RECIPES, SHOPS, type ShopId,
+  ACCESSORIES, ACCESSORY_TABS, type AccessorySlot, BAKERY_INGREDIENTS, FURNITURE, ITEM_BY_ID, RECIPES, SHOPS, type ShopId,
 } from '../content/items';
+import { artPicture } from '../art/library';
 import { h, ICONS } from '../ui/dom';
 import { emptyNote, openPanel, pagedGrid } from '../ui/panel';
 import type { WorldApi } from './interactions';
-import { buyAccessory, buyItem, canMake, count, isUnlocked, mixBowl, sellItem, toggleAccessory } from './save';
+import { buyAccessory, buyFurniture, buyItem, canMake, count, isUnlocked, mixBowl, sellItem, toggleAccessory } from './save';
 import { unlockFor } from '../content/rewards';
 
 /** Nút khóa: cần thêm sao (SPEC 16.4) — không mua bằng xu hay tiền thật. */
@@ -43,7 +44,7 @@ function frame(api: WorldApi, id: ShopId, onExit: () => void): Frame {
     api.audio.pop();
     onExit();
   });
-  const root = h('div', { class: `shop-scene shop-${id}`, style: `--shop:${def.color};--roof:${def.roof}` },
+  const root = h('div', { class: `shop-scene shop-${id === 'decor' ? 'home' : id}`, style: `--shop:${def.color};--roof:${def.roof}` },
     h('div', { class: 'shop-awning' }),
     h('div', { class: 'shop-decor', 'aria-hidden': 'true' }),
     h('header', { class: 'shop-head' }, exit, h('h2', {}, def.name), coins),
@@ -403,7 +404,7 @@ function bakery(api: WorldApi, f: Frame) {
       ),
     );
     // nguyên liệu bé đang có (trong túi) để cho vào bát
-    const pantryIds = [...new Set([...SHOPS.baking.items(), 'carrot', 'tomato', 'corn', 'watermelon'])].filter((id) => count(api.save, id) - inBowl(id) > 0);
+    const pantryIds = [...new Set([...BAKERY_INGREDIENTS, 'carrot', 'tomato', 'corn', 'watermelon'])].filter((id) => count(api.save, id) - inBowl(id) > 0);
     const pantry = h('div', { class: 'pantry' },
       ...pantryIds.map((id) => {
         const it = ITEM_BY_ID.get(id)!;
@@ -496,11 +497,59 @@ function bakery(api: WorldApi, f: Frame) {
   f.body.append(h('div', { class: 'bakery' }, h('div', { class: 'acc-tabs bakery-tabs' }, tabBuy, tabMix), content));
 }
 
+// =====================================================================
+// 5) HOME DECOR SHOP — nội thất 50–100 xu (SPEC 21.2)
+// =====================================================================
+function decorShop(api: WorldApi, f: Frame) {
+  const note = h('p', { class: 'shop-note', 'aria-live': 'polite' }, 'Chạm vào hình để nghe tên. Mua đồ rồi về nhà trang trí nhé! 🏠');
+  const shelf = h('div', { class: 'decor-shelf' });
+  const keep = { page: 0 }; // mua xong vẫn ở trang đang xem
+  const paint = () => {
+    const cards = FURNITURE.map((d) => {
+      const pic = h('button', { class: 'decor-pic', 'aria-label': d.word }, artPicture(d.word, 'decor-art') ?? d.emoji);
+      pic.addEventListener('click', () => {
+        bump(pic, 'boing');
+        api.learn(d.word);
+      });
+      const owned = (api.save.furniture.inv[d.id] ?? 0) + api.save.furniture.placed.filter((p) => p.id === d.id).length;
+      const buy = h('button', { class: 'btn btn-green card-btn' }, `BUY 🪙${d.price}`);
+      buy.addEventListener('click', async () => {
+        const r = buyFurniture(api.save, d.id);
+        if (r === 'coins') {
+          // không đủ xu: không mua được, giải thích bằng tiếng Việt (SPEC 21.2)
+          api.audio.hmm();
+          f.talk(`You need ${d.price} coins!`, true);
+          note.textContent = `Chưa đủ xu: ${d.vi} cần ${d.price} xu, bé đang có ${api.save.coins} xu. Hãy trồng và bán thêm nông sản nhé! 🌱`;
+          note.classList.add('warn');
+          return;
+        }
+        if (r !== 'ok') return;
+        api.audio.coin();
+        api.changed();
+        f.paintCoins();
+        f.happy();
+        f.talk(`A ${d.word}! Put it in your house!`);
+        note.textContent = `Đã mua ${d.vi}! Về nhà → mở 🎒 túi đồ → My furniture → PLACE để đặt vào nhà.`;
+        note.classList.remove('warn');
+        api.learn(d.word);
+        await fly(f.root, '🪙', buy.getBoundingClientRect(), f.coins.getBoundingClientRect());
+        paint();
+      });
+      return h('div', { class: 'decor-card' }, pic, h('b', { class: 'decor-word' }, d.word), h('small', { class: 'decor-vi' }, d.vi),
+        owned ? h('span', { class: 'wc-badge' }, `×${owned}`) : null, buy);
+    });
+    shelf.replaceChildren(pagedGrid(cards, api.rules.maxChoices, undefined, keep));
+  };
+  paint();
+  f.body.append(note, shelf);
+}
+
 export function shopView(api: WorldApi, id: ShopId, onExit: () => void): HTMLElement {
   const f = frame(api, id, onExit);
   if (id === 'accessory') boutique(api, f);
   else if (id === 'seed') seedCenter(api, f);
   else if (id === 'market') fruitStand(api, f);
+  else if (id === 'decor') decorShop(api, f);
   else bakery(api, f);
   return f.root;
 }

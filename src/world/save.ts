@@ -12,6 +12,7 @@ import { type Quest, type QuestEvent, QUEST_TEMPLATES, dayKey, questReward, refr
 import type { AgeGroup } from '../config/ageRules';
 import type { GameId } from '../content/gamesData';
 import { TREE_BY_ID } from '../art/library/trees';
+import { FURNITURE_BY_ID, ZOO_TICKET_PRICE } from '../content/items';
 import { GAMES } from '../content/gamesData';
 import {
   type ZooBadge, ZOO, ZOO_BADGES, ZOO_BY_ID, ZOO_DIRTY_AFTER_MS, ZOO_STAR_BADGE, ZOO_STAR_NEW_ANIMAL, ZOO_ZONES, type ZooZone,
@@ -59,6 +60,23 @@ export interface WorldSave {
   zooPos?: { x: number; y: number };
   /** Sở thú (SPEC 19.8): số lần chạm từng loài, lần cho ăn đúng, lần dọn từng khu, huy hiệu. */
   zoo: ZooProgress;
+  /** Vé sở thú cho lượt tham quan hiện tại (SPEC 21.6). */
+  zooTicket: boolean;
+  /** Nội thất (SPEC 21.2–21.3): kho (chưa đặt) + đồ đã đặt trong nhà. */
+  furniture: FurnitureState;
+  /** Lucky Seed Wheel (SPEC 21.4). */
+  wheel: WheelState;
+}
+
+export interface PlacedFurniture { uid: number; id: string; x: number; y: number }
+export interface FurnitureState { inv: Record<string, number>; placed: PlacedFurniture[]; nextUid: number }
+export interface WheelState {
+  /** Số câu đúng đang tích cho lượt quay kế tiếp. */
+  progress: number;
+  /** Số lượt quay còn lại. */
+  spins: number;
+  /** Lịch sử phần thưởng (mới nhất cuối, tối đa 50). */
+  history: { seed: string; at: number }[];
 }
 
 export interface ZooProgress {
@@ -85,6 +103,9 @@ export function newSave(): WorldSave {
     orchard: {},
     place: 'farm',
     zoo: { seen: {}, fedOk: 0, cleanAt: {}, badges: [] },
+    zooTicket: false,
+    furniture: { inv: {}, placed: [], nextUid: 1 },
+    wheel: { progress: 0, spins: 0, history: [] },
   };
 }
 
@@ -154,6 +175,33 @@ export function sanitizeSave(raw: unknown): WorldSave {
   }
   if (isNum(r.savedAt) && r.savedAt > 0) s.savedAt = r.savedAt;
   if (r.place === 'zoo') s.place = 'zoo'; // nơi khác (park/school/library của bản đồ thế giới đã gỡ) → nông trại
+  // vé sở thú: save cũ đang ở sở thú (trước khi có vé) được coi là đã có vé — không đuổi bé ra
+  s.zooTicket = s.place === 'zoo' && (r.zooTicket === true || r.zooTicket === undefined);
+  const fu = r.furniture as Record<string, unknown> | undefined;
+  if (fu && typeof fu === 'object') {
+    if (fu.inv && typeof fu.inv === 'object') {
+      for (const [k, v] of Object.entries(fu.inv as Record<string, unknown>)) if (FURNITURE_BY_ID.has(k) && isNum(v) && v > 0) s.furniture.inv[k] = Math.floor(v);
+    }
+    if (Array.isArray(fu.placed)) {
+      for (const it of (fu.placed as Record<string, unknown>[]).slice(0, 200)) {
+        if (it && isNum(it.uid) && typeof it.id === 'string' && FURNITURE_BY_ID.has(it.id) && isNum(it.x) && isNum(it.y)) {
+          s.furniture.placed.push({ uid: Math.floor(it.uid), id: it.id, x: Math.floor(it.x), y: Math.floor(it.y) });
+        }
+      }
+    }
+    const maxUid = s.furniture.placed.reduce((m, p) => Math.max(m, p.uid), 0);
+    s.furniture.nextUid = Math.max(maxUid + 1, isNum(fu.nextUid) ? Math.floor(fu.nextUid) : 1);
+  }
+  const wh = r.wheel as Record<string, unknown> | undefined;
+  if (wh && typeof wh === 'object') {
+    if (isNum(wh.progress) && wh.progress > 0) s.wheel.progress = Math.floor(wh.progress);
+    if (isNum(wh.spins) && wh.spins > 0) s.wheel.spins = Math.floor(wh.spins);
+    if (Array.isArray(wh.history)) {
+      s.wheel.history = (wh.history as Record<string, unknown>[])
+        .filter((x) => x && typeof x.seed === 'string' && ITEM_BY_ID.get(x.seed)?.special && isNum(x.at))
+        .slice(-50).map((x) => ({ seed: x.seed as string, at: x.at as number }));
+    }
+  }
   const zp = r.zooPos as Record<string, unknown> | undefined;
   if (zp && isNum(zp.x) && isNum(zp.y)) s.zooPos = { x: zp.x, y: zp.y };
   const z = r.zoo as Record<string, unknown> | undefined;
@@ -288,11 +336,19 @@ export function care(s: WorldSave, key: string, now: number): boolean {
 export const HARVEST_YIELD = 2;
 
 /** Thu hoạch → trả về id nông sản nhận được. */
-export function harvest(s: WorldSave, key: string, now: number): string | null {
+/** Đồ chơi có thể ra từ Toy Seed. */
+export const SURPRISE_TOYS = ['teddy-bear', 'kite', 'robot', 'ball', 'blocks'] as const;
+export const STAR_SEED_STARS = 2;
+
+export function harvest(s: WorldSave, key: string, now: number, rand: () => number = Math.random): string | null {
   const p = s.plots[key];
   if (!p || plotStage(p, now) !== 'ready') return null;
-  const crop = ITEM_BY_ID.get(p.crop)!.grows!;
-  addItem(s, crop, HARVEST_YIELD);
+  const seed = ITEM_BY_ID.get(p.crop)!;
+  let crop = seed.grows!;
+  // Toy Seed: đồ chơi bất ngờ (SPEC 21.4)
+  if (crop === 'surprise') crop = SURPRISE_TOYS[Math.floor(rand() * SURPRISE_TOYS.length) % SURPRISE_TOYS.length];
+  addItem(s, crop, seed.yield ?? HARVEST_YIELD);
+  if (crop === 'gold-star') addStars(s, STAR_SEED_STARS); // Star Seed: +2 sao thật
   delete s.plots[key];
   return crop;
 }
@@ -471,7 +527,7 @@ export function finishGame(s: WorldSave, game: GameId, reward: { stars: number; 
 
 // ---------- Vườn cây ăn quả (SPEC 18.4, 18.5) ----------
 /** Quả vừa hái mọc lại (quả non) rồi chín sau ~1 phút. */
-export const FRUIT_REGROW_MS = 60_000;
+export const FRUIT_REGROW_MS = 10 * 60_000; // giai đoạn 10: 10 phút (SPEC 21.5)
 
 /** Quả ở vị trí `slot` của cây đã chín chưa. */
 export function fruitRipe(s: WorldSave, treeId: string, slot: number, now: number): boolean {
@@ -547,4 +603,75 @@ export function zooClean(s: WorldSave, zone: ZooZone, now: number): ZooReward {
 export function zooDirty(s: WorldSave, zone: ZooZone, now: number): boolean {
   const t = s.zoo.cleanAt[zone];
   return t === undefined || now - t > ZOO_DIRTY_AFTER_MS;
+}
+
+// ---------- Vé sở thú (SPEC 21.6) ----------
+export type TicketResult = 'has' | 'bought' | 'coins';
+/** Mua vé cho lượt tham quan này: đã có vé → không trừ thêm; thiếu xu → không vào. */
+export function buyZooTicket(s: WorldSave): TicketResult {
+  if (s.zooTicket) return 'has';
+  if (s.coins < ZOO_TICKET_PRICE) return 'coins';
+  s.coins -= ZOO_TICKET_PRICE;
+  s.zooTicket = true;
+  return 'bought';
+}
+/** Rời sở thú → vé hết hiệu lực (lượt sau mua vé mới). */
+export function endZooVisit(s: WorldSave): void {
+  s.zooTicket = false;
+}
+
+// ---------- Nội thất (SPEC 21.2–21.3) ----------
+export function buyFurniture(s: WorldSave, id: string): ShopResult {
+  const f = FURNITURE_BY_ID.get(id);
+  if (!f) return 'none';
+  if (s.coins < f.price) return 'coins';
+  s.coins -= f.price;
+  s.furniture.inv[id] = (s.furniture.inv[id] ?? 0) + 1;
+  return 'ok';
+}
+/** Lấy 1 món trong kho ra đặt tại (x, y). Kiểm tra vị trí hợp lệ do nơi gọi làm (furniture.ts). */
+export function placeFurniture(s: WorldSave, id: string, x: number, y: number): PlacedFurniture | null {
+  if ((s.furniture.inv[id] ?? 0) <= 0) return null;
+  s.furniture.inv[id] -= 1;
+  if (s.furniture.inv[id] === 0) delete s.furniture.inv[id];
+  const p = { uid: s.furniture.nextUid++, id, x, y };
+  s.furniture.placed.push(p);
+  return p;
+}
+export function moveFurniture(s: WorldSave, uid: number, x: number, y: number): boolean {
+  const p = s.furniture.placed.find((q) => q.uid === uid);
+  if (!p) return false;
+  p.x = x;
+  p.y = y;
+  return true;
+}
+export function storeFurniture(s: WorldSave, uid: number): boolean {
+  const i = s.furniture.placed.findIndex((q) => q.uid === uid);
+  if (i < 0) return false;
+  const [p] = s.furniture.placed.splice(i, 1);
+  s.furniture.inv[p.id] = (s.furniture.inv[p.id] ?? 0) + 1;
+  return true;
+}
+
+// ---------- Lucky Seed Wheel (SPEC 21.4) ----------
+export const WHEEL_SEEDS = ['candy-seed', 'balloon-seed', 'car-seed', 'star-seed', 'toy-seed'] as const;
+/** 1 câu trả lời đúng. Trả về true nếu vừa được thêm 1 lượt quay. */
+export function addCorrect(s: WorldSave, perSpin: number): boolean {
+  s.wheel.progress += 1;
+  if (s.wheel.progress >= Math.max(1, perSpin)) {
+    s.wheel.progress = 0;
+    s.wheel.spins += 1;
+    return true;
+  }
+  return false;
+}
+/** Quay: trừ 1 lượt, CHỐT hạt giống vào túi + lịch sử ngay (trước khi vẽ vòng quay). Hết lượt → null. */
+export function spinWheel(s: WorldSave, now: number, rand: () => number = Math.random): string | null {
+  if (s.wheel.spins <= 0) return null;
+  s.wheel.spins -= 1;
+  const seed = WHEEL_SEEDS[Math.floor(rand() * WHEEL_SEEDS.length) % WHEEL_SEEDS.length];
+  addItem(s, seed);
+  s.wheel.history.push({ seed, at: now });
+  if (s.wheel.history.length > 50) s.wheel.history.splice(0, s.wheel.history.length - 50);
+  return seed;
 }

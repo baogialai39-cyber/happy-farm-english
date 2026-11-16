@@ -15,6 +15,7 @@ import './learning.css';
 import './games.css';
 import './time.css';
 import './zoo.css';
+import './decor.css';
 
 import type { AppCtx, Route } from './app';
 import { createProfileScene } from './scenes/createProfile';

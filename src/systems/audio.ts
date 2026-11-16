@@ -299,6 +299,13 @@ export class AudioEngine {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.note(this.sfxBus!, f, t + i * 0.1, 0.5, 0.32, 'triangle'));
   }
 
+  /** Tiếng "tích" rất ngắn, nhỏ khi vòng quay đi qua một ô (F-229). `lift` 0..1 nâng cao độ dần. */
+  tick(lift = 0): void {
+    if (!this.ctx || !this.sfxBus) return;
+    const t = this.ctx.currentTime;
+    this.note(this.sfxBus, 1500 + lift * 500, t, 0.05, 0.12, 'triangle');
+  }
+
   /** "Ting" ngắn, nhẹ khi trả lời đúng (không phải lời khen — F-170). */
   ting(): void {
     if (!this.ctx || !this.sfxBus) return;

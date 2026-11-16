@@ -37,7 +37,7 @@ describe('bản đồ', () => {
     expect(zoneAt(WORLD, 15, 10)?.id).toBe('living');
   });
 
-  it('4 cửa hàng đều có cửa đi vào được', () => {
+  it('mọi cửa hàng (4 cửa hàng + Home Decor Shop) đều có cửa đi vào được', () => {
     for (const shop of Object.keys(SHOPS)) {
       const o = WORLD.objects.find((x) => x.shop === shop)!;
       expect(grid.findPath(spawn, grid.standTiles(o))).not.toBeNull();
@@ -106,7 +106,7 @@ describe('kinh tế trong game', () => {
     expect(count(s, 'carrot')).toBe(2);
     const before = s.coins;
     expect(sellItem(s, 'carrot')).toBe('ok');
-    expect(s.coins).toBe(before + 3);
+    expect(s.coins).toBe(before + 1); // giai đoạn 10: cà rốt bán 1 xu (SPEC 21.5)
   });
 
   it('xu không bao giờ âm', () => {

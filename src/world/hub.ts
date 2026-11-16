@@ -9,6 +9,7 @@ import { h } from '../ui/dom';
 import { openPanel } from '../ui/panel';
 import type { WorldApi } from './interactions';
 import { claimQuest, ensureQuests } from './save';
+import { openWheel } from '../games/wheel';
 
 export type HubTab = 'quests' | 'games' | 'rewards';
 
@@ -101,7 +102,22 @@ export function openHub(api: WorldApi, tab: HubTab, hooks: HubHooks): void {
           return h('div', { class: 'game-card' }, tap, h('span', { class: 'game-plays' }, `⭐ ×${api.save.games[g.id] ?? 0}`), play);
         }),
       );
+    // LUCKY SEED WHEEL (SPEC 21.4): lượt quay chỉ từ câu trả lời đúng
+    const w = api.save.wheel, per = api.rules.correctPerSpin;
+    const spin = h('button', { class: 'btn btn-green card-btn' }, w.spins > 0 ? `🎡 SPIN ×${w.spins}` : `🎡 ${w.progress} / ${per}`);
+    spin.disabled = w.spins <= 0;
+    spin.addEventListener('click', () => {
+      api.audio.pop();
+      p.close();
+      openWheel(api, { onClose: () => hooks.refresh() });
+    });
+    const wheelCard = h('div', { class: 'game-card wheel-card' },
+      h('button', { class: 'game-tap', 'aria-label': 'Lucky Seed Wheel', onclick: () => api.say('Lucky Seed Wheel') },
+        h('span', { class: 'game-emoji' }, '🎡'), h('b', {}, 'Lucky Seed Wheel'),
+        h('small', {}, w.spins > 0 ? 'Vòng quay hạt giống — bé có lượt quay!' : `Trả lời đúng ${per} câu = 1 lượt quay`)),
+      spin);
     body.replaceChildren(
+      h('div', { class: 'game-grid' }, wheelCard),
       h('p', { class: 'game-section' }, '🏡 Farm games'), section('farm'),
       h('p', { class: 'game-section' }, '🦁 Zoo games'), section('zoo'),
     );

@@ -36,6 +36,8 @@ export interface AgeRule {
   interactions: ReadonlyArray<'tap' | 'drag' | 'match' | 'order'>;
   speechRate: number;
   /** Số lần đọc một từ trong ô từ vựng (SPEC 15.2: luôn 3 lần). */
+/** Số câu trả lời đúng để được 1 lượt quay LUCKY SEED WHEEL (SPEC 21.4). */
+  correctPerSpin: number;
   speechRepeat: number;
   /** Khoảng nghỉ giữa các lần đọc (ms). */
   speechPauseMs: number;
@@ -61,6 +63,7 @@ export const AGE_RULES: Readonly<Record<AgeGroup, AgeRule>> = {
     breakSeconds: 30,
     interactions: ['tap'],
     speechRate: 0.85,
+    correctPerSpin: 5,
     speechRepeat: 3,
     speechPauseMs: 1200,
     sentences: false,
@@ -82,6 +85,7 @@ export const AGE_RULES: Readonly<Record<AgeGroup, AgeRule>> = {
     breakSeconds: 30,
     interactions: ['tap', 'drag'],
     speechRate: 0.9,
+    correctPerSpin: 7,
     speechRepeat: 3,
     speechPauseMs: 1000,
     sentences: false,
@@ -103,6 +107,7 @@ export const AGE_RULES: Readonly<Record<AgeGroup, AgeRule>> = {
     breakSeconds: 60,
     interactions: ['tap', 'drag', 'match', 'order'],
     speechRate: 0.95,
+    correctPerSpin: 10,
     speechRepeat: 3,
     speechPauseMs: 800,
     sentences: true,

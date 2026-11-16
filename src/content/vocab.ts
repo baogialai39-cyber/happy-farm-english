@@ -310,6 +310,18 @@ const ROWS: Row[] = [
   ['running', '/ˈrʌn.ɪŋ/', 'Đang chạy', '🏃'],
   ['jumping', '/ˈdʒʌm.pɪŋ/', 'Đang nhảy', '🤸'],
 
+  // ----- Giai đoạn 10: nội thất, vòng quay hạt giống -----
+  ['candy', '/ˈkæn.di/', 'Kẹo', '🍭'],
+  ['toy', '/tɔɪ/', 'Đồ chơi', '🧸'],
+  ['surprise', '/sɚˈpraɪz/', 'Điều bất ngờ', '🎁'],
+  ['painting', '/ˈpeɪn.t̬ɪŋ/', 'Bức tranh', '🖼️'],
+  ['rug', '/rʌɡ/', 'Tấm thảm', '🟪'],
+  ['furniture', '/ˈfɝː.nɪ.tʃɚ/', 'Đồ nội thất', '🛋️'],
+  ['ticket', '/ˈtɪk.ɪt/', 'Vé', '🎟️'],
+  ['wheel', '/wiːl/', 'Vòng quay', '🎡'],
+  ['spin', '/spɪn/', 'Quay', '🎡'],
+  ['home decor', '/ˌhoʊm ˈdeɪ.kɔːr/', 'Trang trí nhà', '🏠'],
+
   // ----- Đồ chơi -----
   ['ball', '/bɑːl/', 'Quả bóng', '⚽'],
   ['teddy bear', '/ˈted.i ˌber/', 'Gấu bông', '🧸'],

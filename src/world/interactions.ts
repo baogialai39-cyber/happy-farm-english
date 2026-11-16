@@ -36,6 +36,8 @@ export interface WorldApi {
   sleep(): Promise<void>;
   changed(): void;
   refreshLook(): Promise<void>;
+  /** Lưu ngay (vòng quay, đặt đồ) — tránh mất kết quả khi tải lại trang. */
+  saveNow?(): Promise<void>;
   /** Khung từ kế tiếp nằm cạnh phần tử này (VD món đồ trong bảng cận cảnh). */
   anchorEl?(el: HTMLElement): void;
   /** Đổi màu áo liền thân (tủ quần áo, SPEC 18.2). */
@@ -248,7 +250,6 @@ function plotAction(api: WorldApi, o: WorldObject) {
     );
     return;
   }
-  const crop = ITEM_BY_ID.get(ITEM_BY_ID.get(p!.crop)!.grows!)!;
   if (stage === 'dry') {
     water(api.save, key, now);
     api.event('water');
@@ -266,12 +267,20 @@ function plotAction(api: WorldApi, o: WorldObject) {
   } else {
     const got = harvest(api.save, key, now);
     if (!got) return;
+    const item = ITEM_BY_ID.get(got)!; // Toy Seed → đồ chơi thật vừa nhận (không phải "surprise")
     api.event('harvest');
     if (got === 'apple') api.event('harvest:apple', HARVEST_YIELD);
-    api.audio.chime();
     api.changed();
-    api.act(crop.emoji);
-    api.learn(crop.word, { key: `have:${crop.id}`, entry: haveSentence(crop.word, crop.emoji) });
+    if (item.kind === 'toy') {
+      // phần thưởng từ hạt đặc biệt (SPEC 21.4): âm vui + nhân vật nhảy mừng
+      api.audio.fanfare();
+      api.act('🎉');
+      api.learn(item.word, { key: `have:${item.id}`, entry: haveSentence(item.word, item.emoji) });
+      return;
+    }
+    api.audio.chime();
+    api.act(item.emoji);
+    api.learn(item.word, { key: `have:${item.id}`, entry: haveSentence(item.word, item.emoji) });
   }
 }
 

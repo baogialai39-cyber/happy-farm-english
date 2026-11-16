@@ -10,7 +10,7 @@ import { artSvg, hasArt } from '../art/library';
 import { TREES } from '../art/library/trees';
 import { characterSvg } from '../art/character';
 import { CHARACTERS, ONESIES, withOnesie } from '../content/characters';
-import { countLabel, countSentence, countVi, numberWord } from '../content/counting';
+import { countLabel, countNumberOnly, countSentence, countVi, numberWord } from '../content/counting';
 import { ANIMALS, ITEM_BY_ID } from '../content/items';
 import { resolveVocab } from '../content/vocab';
 import { placeBeside } from '../learning/teacher';
@@ -148,6 +148,13 @@ describe('đếm bằng tiếng Anh', () => {
     expect(countLabel('apple', 1)).toBe('1 APPLE');
     expect(countLabel('apple', 2)).toBe('2 APPLES');
     expect(countVi('orange', 3)).toBe('3 quả cam');
+  });
+
+  it('vườn cây chỉ đọc số đếm, không kèm tên quả (F-228)', () => {
+    expect(countNumberOnly(1)).toEqual({ label: '1 · ONE', say: 'One!', vi: 'Số 1' });
+    expect(countNumberOnly(3).say).toBe('Three!');
+    expect(countNumberOnly(21).label).toBe('21 · TWENTY-ONE');
+    for (let n = 1; n <= 30; n++) expect(countNumberOnly(n).say).not.toMatch(/apple|mango|banana|orange|coconut|grape/i);
   });
 });
 

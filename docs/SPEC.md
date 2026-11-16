@@ -1,6 +1,6 @@
 # SPEC — Happy Farm English
 
-> Phiên bản đặc tả: 0.9 (2026-11-08) · Trạng thái: giai đoạn 8 — HAPPY ZOO (mục 19), khen ở cuối lượt mini-game (16.3). (Bản đồ thế giới giai đoạn 9 đã gỡ theo yêu cầu chủ dự án.)
+> Phiên bản đặc tả: 1.1 (2026-11-09) · Trạng thái: giai đoạn 10 — màu tươi sáng, HOME DECOR SHOP + trang trí nhà, LUCKY SEED WHEEL, cân bằng kinh tế, vé sở thú (mục 21).
 > Luôn đọc cùng `CLAUDE.md` (luật an toàn) và `docs/TINH-NANG.md` (danh sách tính năng).
 
 ---
@@ -549,7 +549,7 @@ Mỗi khi bé thực hiện một thao tác (mua hạt, tưới cây, thu hoạc
 
 ### 18.5 Chạm trái cây 2 lần
 1. **Lần 1** chạm một quả → nhân vật đi tới → **khung từ vựng cạnh quả** (hình quả + APPLE + /IPA/ + "Quả táo.") → đọc "Apple!" ×3 (nghỉ giữa) → khung **tự đóng**. Quả được đánh dấu (viền sáng).
-2. **Lần 2** chạm **lại đúng quả đó** → quả **rơi** xuống giỏ dưới gốc (rơi có trọng lực + nảy nhẹ) → giỏ +1 → khung hiện **"3 APPLES"** và đọc "Three apples." (số đếm tiếng Anh, số nhiều đúng: 1 apple, 2 apples; grapes, mangoes…).
+2. **Lần 2** chạm **lại đúng quả đó** → quả **rơi** xuống giỏ dưới gốc (rơi có trọng lực + nảy nhẹ) → giỏ +1 → khung hiện **số đếm** ("3 · THREE") và chỉ đọc **số đếm** tiếng Anh: "Three!" — không đọc kèm tên trái cây (tên quả đã học ở lần 1), để bé không bị rối vì nghe nhiều từ. Dòng tiếng Việt: "Số 3". *(Đổi từ "Three apples." theo yêu cầu chủ dự án 2026-11-09.)*
 - Chỉ hái được quả **đã chín**; chạm lần 2 vào quả non → "Not yet!" nhẹ nhàng, không hái.
 - **Không hái trùng**: quả đang rơi/đã hái không nhận chạm; trạng thái từng quả lưu trong `WorldSave.orchard`.
 - Số lượng = số quả trong túi (cập nhật chính xác, dùng chung với Fruit Market). Câu đếm đọc **1 lần** (từ vựng ở lần 1 đã đọc 3 lần).
@@ -635,3 +635,63 @@ Mỗi khi bé thực hiện một thao tác (mua hạt, tưới cây, thu hoạc
 - Huy hiệu (mỗi cái +2 ⭐, một lần): **First Friend** (gặp 1 loài), mỗi khu đã gặp đủ loài (**Grassland / Forest / Ice Land / Ocean / Bird Garden Explorer**), **Zoo Explorer** (đủ 22 loài), **Kind Keeper** (cho ăn đúng 5 lần), **Clean Zoo** (dọn sạch cả 5 khu).
 - **Không bắt buộc**, không thời hạn, không streak (A10).
 - Lưu trong `WorldSave.zoo`: `{ seen: Record<animalId, số lần chạm>, fedOk: number, cleanAt: Record<khu, ms>, badges: string[] }`.
+
+---
+
+## 21. Màu sắc, nội thất, vòng quay hạt giống, kinh tế (giai đoạn 10)
+
+### 21.1 Màu sắc tươi sáng
+- Tăng độ bão hòa & tương phản cho **toàn bộ cảnh** (thế giới, màn chờ, màn chào) bằng một bộ lọc chung (bão hòa ≈ +22%, tương phản ≈ +6%, sáng ≈ +3%) + lớp **ánh sáng ấm** rất nhẹ; cỏ xanh tươi hơn. Không đổi bố cục, không thay hình cũ; không chói (không vượt bão hòa 1,3).
+- **F-230 (2026-11-16)**: nền cỏ **xanh đậm** (ô cỏ #4FAE3A / #48A534, ngọn cỏ #3A8A27) để cảnh sắc nét, đường đất / hoa / đồ vật nổi rõ hơn. Mái hiên 5 cửa hàng đổi sang màu đậm, sắc nét, có viền tối: Accessory Shop **tím** #8E3FD8, Seed Shop **đỏ** #E53935, Fruit Market **vàng** #FFC107, Baking Shop **tím** #8E3FD8, Home Decor Shop **đỏ** #E53935 (2 cửa hàng cạnh nhau không trùng màu). Màu mái dùng chung cho sọc rèm bên trong cửa hàng.
+
+### 21.2 HOME DECOR SHOP (cửa hàng nội thất)
+- Cửa hàng thứ 5, ở sân trước nhà (phía bắc đường chính). Người bán 🦊. Vòi phun nước (vật trang trí mở khóa) dời sang chỗ trống bên cạnh.
+| Món | Từ | Giá | Chân đồ (ô) |
+|---|---|---|---|
+| Ti vi | television | 100 | 1×1 |
+| Bàn gỗ | table | 100 | 1×1 |
+| Ghế | chair | 100 | 1×1 |
+| Ghế sofa | sofa | 100 | 2×1 |
+| Tủ quần áo | wardrobe | 90 | 2×1 |
+| Giường | bed | 100 | 2×2 |
+| Tranh treo tường | painting | 100 | treo tường |
+| Đèn trang trí | lamp | 60 | 1×1 |
+| Thảm | rug | 50 | 2×1 (phẳng, đi lên được) |
+| Chậu hoa | flower pot | 50 | 1×1 |
+- Chạm hình → đọc tên tiếng Anh 3 lần. **BUY**: đủ xu → trừ xu, món đồ vào **kho nội thất**; thiếu xu → không mua được, báo tiếng Việt ("Chưa đủ xu: cần 100 xu, bé đang có 37 xu…") + câu tiếng Anh.
+
+### 21.3 Trang trí nhà
+- Mở **🎒 túi đồ** khi đang ở trong nhà → mục **My furniture** → **PLACE** → các ô đặt được sáng xanh → chạm ô → đồ xuất hiện thật trong nhà (vẽ bằng hình thư viện, có va chạm).
+- Ô hợp lệ: sàn trong nhà, không trùng đồ khác, không phải cửa, **không chặn đường** tới mọi đồ vật / cửa trong nhà (kiểm tra đường đi); tranh chỉ treo trên tường phía trên sàn. Chạm ô không hợp lệ → "Hmm! Not here." nhẹ nhàng.
+- Khi đang đặt: camera dời tới các ô xanh gần bé nhất (tranh treo tường luôn nhìn thấy), dải hướng dẫn (tiếng Anh + tiếng Việt + nút CANCEL) nằm ở **dưới** màn hình để không che ô đặt.
+- Chạm đồ đã đặt → tên tiếng Anh + **MOVE** (đặt chỗ khác) / **PUT AWAY** (cất vào kho). Vị trí lưu trong `WorldSave.furniture`.
+
+### 21.4 LUCKY SEED WHEEL (vòng quay hạt giống may mắn)
+- Mỗi câu trả lời đúng trong mini-game (mỗi cặp nối đúng) tính 1. Đủ **5 / 7 / 10 câu** (nhóm 2–3 / 4–5 / 6–8, cấu hình `correctPerSpin`) → **+1 lượt quay miễn phí**; màn tổng kết chúc mừng + nút **SPIN NOW**. Lượt quay cũng mở được ở bảng Play & Learn → Games.
+- Mở từ màn tổng kết mini-game thì bảng vòng quay hiện **ngay trên** màn mini-game.
+- 5 ô, **ô nào cũng trúng** một hạt giống: **Candy Seed** (🍭 candy), **Balloon Seed** (🎈 balloon), **Car Seed** (🚗 car), **Star Seed** (⭐ star, thu hoạch được +2 sao), **Toy Seed** (🎁 đồ chơi bất ngờ: teddy bear / kite / robot / ball / blocks).
+- Kết quả được **chốt và lưu trước** khi vòng quay chạy (tải lại trang không quay thêm được, không mất lượt đã có). Lưu số câu đúng đang tích, số lượt còn lại, lịch sử 50 lần quay gần nhất.
+- **Không đánh bạc**: lượt quay chỉ đến từ việc học; không mua lượt bằng xu hay tiền thật; không có ô "trượt", không hiệu ứng suýt trúng (không bò chậm qua ô bên cạnh rồi mới dừng).
+- **Hiệu ứng quay (F-229)** cho vui và hồi hộp, vẫn đúng luật A8: lấy đà lùi nhẹ → quay nhanh ~5 vòng rồi chậm dần (~4,5 giây); mỗi lần qua một ô có tiếng "tích" nhẹ và kim chỉ bật nhẹ; vòng đèn quanh vành chạy luân phiên **chậm (≤ 1,5 lần/giây, không nháy mạnh)**; nền sáng ấm phập phồng; dừng → ô trúng sáng lên 2 lần chậm, kim nảy nhẹ, pháo giấy màu rơi + kèn vui + phần thưởng bật ra. Chữ trạng thái: "Spinning…!" (+ tiếng Việt). Thiết bị bật "giảm chuyển động": quay ngắn ~2 giây, đèn đứng yên, không pháo giấy rơi.
+- Hạt đặc biệt nằm trong túi, gieo như hạt thường (chọn ô đất → PLANT → tưới → chăm → thu hoạch). Thu hoạch: phần thưởng vào túi đồ (không bán ở chợ), có âm thanh vui + biểu tượng nhảy lên.
+
+### 21.5 Kinh tế
+| Nguồn / món | Cũ | Mới |
+|---|---:|---:|
+| Bán: carrot, tomato, corn, sunflower | 3–4 | **1** |
+| Bán: apple, banana, orange, mango | 5–6 | **2** |
+| Bán: strawberry, watermelon, grapes, coconut | 5–7 | **3** |
+| Bán: egg / milk | 3 / 4 | **1 / 2** |
+| Hạt giống (thu hoạch được 2) | 2–5 | **1** (rau) · **2** (táo, cam, chuối) · **3** (dâu, dưa hấu, nho) |
+| Phụ kiện (áo, quần, giày, ba lô 5 · mũ, kính, khăn 4) | 5–12 | **4–5** |
+| Nguyên liệu làm bánh | 2–6 | **1–4** (vẫn đắt hơn giá bán) |
+| Đồ ăn làm sẵn ở Baking Shop (bread, cookies, pancakes 4 · cake, pie… 5) | — | **4–5** |
+| Đồ nội thất | — | **50–100** |
+| Vé sở thú | miễn phí | **30 / lượt** |
+| Vườn cây ăn quả chín lại sau | 1 phút | **10 phút** |
+- Thưởng mini-game (5 xu, 3 sao) và nhiệm vụ giữ nguyên. Xu & đồ đã lưu của bé **không bị đổi**.
+- Ước tính: 1 phiên 20 phút chăm chỉ ≈ 60–120 xu → 1 món nội thất mỗi 1–2 phiên.
+
+### 21.6 Vé sở thú
+- Chọn Happy Zoo trên bảng Map: đã có vé cho lượt này → vào luôn; chưa có & đủ 30 xu → trừ 30 xu, hiện vé 🎟️ "TICKET!" rồi vào; chưa đủ → không vào, nói "You need 30 coins to visit the zoo!" + tiếng Việt.
+- Vé dùng cho **một lượt tham quan** (tới khi về nông trại); tải lại trang khi đang ở sở thú không bị trừ lại. Lưu `WorldSave.zooTicket`.

@@ -53,6 +53,7 @@ export function furnitureBox(o: WorldObject): { x: number; y: number; w: number;
     const ww = T * 0.78, hh = ww * artAspect(key);
     return { x: cx - ww / 2, y: (o.y + 1) * T - 4 - hh, w: ww, h: hh };
   }
+  if (o.flat) return { x: cx - w / 2, y: o.y * T + (o.h * T - h) / 2, w, h }; // thảm nằm giữa ô
   const base = (o.y + o.h) * T - 2;
   return { x: cx - w / 2, y: base - h, w, h };
 }

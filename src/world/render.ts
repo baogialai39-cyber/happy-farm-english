@@ -112,9 +112,9 @@ export function buildGround(map: WorldMap): HTMLCanvasElement {
   // Cỏ
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
-      c.fillStyle = (x + y) % 2 ? '#C3ECB2' : '#BDE8AB';
+      c.fillStyle = (x + y) % 2 ? '#4FAE3A' : '#48A534'; // F-230: cỏ xanh đậm, sắc nét
       c.fillRect(x * T, y * T, T, T);
-      c.strokeStyle = '#A9DB98';
+      c.strokeStyle = '#3A8A27';
       c.lineWidth = 2;
       c.lineCap = 'round';
       for (let i = 0; i < 3; i++) {
@@ -126,7 +126,7 @@ export function buildGround(map: WorldMap): HTMLCanvasElement {
       }
     }
   // Hoa nhỏ
-  const fcol = ['#FF9CB0', '#FFD36E', '#C3B1E1', '#FFFFFF', '#FFB38A'];
+  const fcol = ['#FF6F9A', '#FFC93C', '#B388FF', '#FFFFFF', '#FF9A5A']; // hoa rực rỡ hơn
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       if (map.tiles[y][x] !== ',') continue;
@@ -416,6 +416,7 @@ const SHOP_WINDOW: Record<ShopId, [string, string]> = {
   seed: ['🌱', '🥕'],
   market: ['🍓', '🍉'],
   baking: ['🧁', '🌾'],
+  decor: ['🛋️', '🖼️'],
 };
 
 function shopSprite(id: ShopId) {
@@ -444,9 +445,14 @@ function shopSprite(id: ShopId) {
     c.lineTo(W - 6, bodyTop + 10);
     c.closePath();
     c.fill();
+    // F-230: viền tối cho mái sắc nét
+    c.strokeStyle = 'rgba(50,25,60,.55)';
+    c.lineWidth = 3;
+    c.lineJoin = 'round';
+    c.stroke();
     const stripes = 10;
     for (let i = 0; i < stripes; i += 2) {
-      c.fillStyle = 'rgba(255,255,255,.75)';
+      c.fillStyle = 'rgba(255,255,255,.95)'; // F-230: sọc trắng đặc, sắc nét
       const x0 = 6 + ((W - 12) * i) / stripes, x1 = 6 + ((W - 12) * (i + 1)) / stripes;
       c.beginPath();
       c.moveTo(x0, bodyTop + 10);
@@ -462,6 +468,9 @@ function shopSprite(id: ShopId) {
       const sx = 6 + ((W - 12) * i) / stripes, sw = (W - 12) / stripes;
       c.arc(sx + sw / 2, bodyTop + 10, sw / 2, 0, Math.PI);
       c.fill();
+      c.strokeStyle = 'rgba(50,25,60,.35)';
+      c.lineWidth = 2;
+      c.stroke();
     }
     // biển tên
     c.font = `800 26px ${TEXT_FONT}`;
@@ -569,6 +578,7 @@ function furnitureEntity(o: WorldObject, st: RenderState): Entity {
   const base = (o.y + o.h) * T;
   const box = furnitureBox(o);
   return {
+    flat: o.flat, // thảm: vẽ sát đất, bé đi lên trên
     y: o.wall ? (o.y + 1) * T + 1 : base - 4, x0: Math.min(x, box?.x ?? x), x1: Math.max(x + w, box ? box.x + box.w : 0), top: Math.min(y - h - 40, (box?.y ?? 1e9) - 40),
     draw(c, t) {
       if (drawFurnitureArt(c, o)) return furnitureOverlay(c, o, st, t);
@@ -1148,7 +1158,7 @@ export function drawWorld(
 ) {
   const { w, h, dpr } = view;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  c.fillStyle = '#A9DB98';
+  c.fillStyle = '#48A534';
   c.fillRect(0, 0, w, h);
   const s = cam.scale;
   c.setTransform(dpr * s, 0, 0, dpr * s, dpr * (w / 2 - cam.x * s), dpr * (h / 2 - cam.y * s));

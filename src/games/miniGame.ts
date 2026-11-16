@@ -10,7 +10,8 @@ import { GAME_REWARD, type UnlockDef } from '../content/rewards';
 import { resolveVocab } from '../content/vocab';
 import { h, ICONS, SVG_NS } from '../ui/dom';
 import type { WorldApi } from '../world/interactions';
-import { finishGame } from '../world/save';
+import { addCorrect, finishGame } from '../world/save';
+import { openWheel } from './wheel';
 import {
   type ChoiceQuestion, type QuizItem, makeChoiceRound, makeCountRound, makeHomeBoards, makeMatchBoards, makeQuizRound, makeSoundRound,
   makeZooFindRound, nextPraise, shuffle, wrongFeedback,
@@ -41,14 +42,23 @@ interface Ctx {
   learned: Set<string>;
   /** Số câu / bảng đã hoàn thành (hiện ở màn tổng kết). */
   solved: number;
+  /** Lượt quay LUCKY SEED WHEEL vừa nhận trong lượt chơi này (SPEC 21.4). */
+  spinsWon: number;
   setProgress(i: number, n: number): void;
 }
 
+/** 1 câu trả lời đúng → tích cho LUCKY SEED WHEEL (lưu ngay, SPEC 21.4). */
+function tally(c: Ctx) {
+  if (addCorrect(c.api.save, c.api.rules.correctPerSpin)) c.spinsWon++;
+  c.api.changed();
+}
+
 /** Trả lời đúng: "ting" nhẹ, ghi nhận từ, sang câu tiếp ngay — KHÔNG khen giữa chừng (F-170). */
-async function correct(c: Ctx, word: string) {
+async function correct(c: Ctx, word: string, count = true) {
   c.api.audio.ting();
   c.learned.add(word);
   c.solved++;
+  if (count) tally(c);
   await wait(650);
 }
 
@@ -224,11 +234,12 @@ async function matchBoards(c: Ctx, boards: MatchPair[][], ask: string, leftClass
           clearSel();
           matched++;
           pair.learn.forEach((x) => c.learned.add(x));
+          tally(c);
           c.api.audio.ting();
           if (pair.sayRight) c.api.say(`${pair.sayLeft}. ${pair.sayRight}.`);
           if (matched === pairs.length) {
             await wait(900);
-            await correct(c, pair.key);
+            await correct(c, pair.key, false);
             resolve();
           }
           return;
@@ -360,7 +371,7 @@ export function openMiniGame(api: WorldApi, game: GameId, hooks: MiniGameHooks):
     stage, praise,
   );
   const c: Ctx = {
-    api, group: api.rules.group, stage, praise, learned: new Set(), solved: 0,
+    api, group: api.rules.group, stage, praise, learned: new Set(), solved: 0, spinsWon: 0,
     setProgress(i, n) {
       dots.replaceChildren(...Array.from({ length: n }, (_, k) => h('span', { class: k < i ? 'done' : k === i ? 'on' : '' })));
     },
@@ -380,6 +391,24 @@ export function openMiniGame(api: WorldApi, game: GameId, hooks: MiniGameHooks):
     api.changed();
     summary();
     if (unlocked.length) hooks.onUnlocks(unlocked);
+  };
+  /** Lượt quay vừa nhận + tiến độ tới lượt kế tiếp (SPEC 21.4). */
+  const wheelBlock = () => {
+    const w = api.save.wheel, per = api.rules.correctPerSpin;
+    const box = h('div', { class: 'mg-wheel' },
+      c.spinsWon > 0
+        ? h('p', { class: 'mg-wheel-won' }, `🎉 You got ${c.spinsWon} free spin${c.spinsWon > 1 ? 's' : ''}!`, h('small', {}, ` Bé được ${c.spinsWon} lượt quay Vòng quay hạt giống!`))
+        : null,
+      h('p', { class: 'mg-wheel-prog' }, `🎡 ${w.progress} / ${per} ✅`, h('small', {}, ` (đủ ${per} câu đúng = 1 lượt quay)`)));
+    if (w.spins > 0) {
+      const spin = h('button', { class: 'btn btn-green mg-big-btn' }, '🎡 SPIN NOW');
+      spin.addEventListener('click', () => {
+        api.audio.pop();
+        openWheel(api, { managePause: false, host: root, onClose: () => box.replaceWith(wheelBlock()) });
+      });
+      box.append(spin);
+    }
+    return box;
   };
   const summary = () => {
     c.setProgress(99, 0);
@@ -413,6 +442,7 @@ export function openMiniGame(api: WorldApi, game: GameId, hooks: MiniGameHooks):
             return chip;
           }),
         ),
+        wheelBlock(),
         h('div', { class: 'mg-sum-actions' }, back, again),
       ),
     );

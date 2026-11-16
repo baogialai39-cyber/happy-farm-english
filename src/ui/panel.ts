@@ -40,14 +40,15 @@ export function openPanel(
 }
 
 /** Lưới thẻ có phân trang: số thẻ mỗi trang = maxChoices của nhóm tuổi. */
-export function pagedGrid(cards: HTMLElement[], perPage: number, empty?: HTMLElement): HTMLElement {
+/** `keep` (tùy chọn): giữ trang đang xem khi lưới được vẽ lại (VD: sau khi bấm BUY). */
+export function pagedGrid(cards: HTMLElement[], perPage: number, empty?: HTMLElement, keep?: { page: number }): HTMLElement {
   const wrap = h('div', { class: 'paged' });
   if (cards.length === 0) {
     if (empty) wrap.append(empty);
     return wrap;
   }
-  let page = 0;
   const pages = Math.ceil(cards.length / perPage);
+  let page = Math.min(Math.max(0, keep?.page ?? 0), pages - 1);
   const grid = h('div', { class: 'card-grid' });
   const prev = h('button', { class: 'icon-btn page-btn', 'aria-label': 'Previous', html: ICONS.back });
   const next = h('button', { class: 'icon-btn page-btn', 'aria-label': 'Next', html: ICONS.next });
@@ -60,6 +61,7 @@ export function pagedGrid(cards: HTMLElement[], perPage: number, empty?: HTMLEle
     prev.disabled = page === 0;
     next.disabled = page >= pages - 1;
     dots.replaceChildren(...Array.from({ length: pages }, (_, i) => h('span', { class: i === page ? 'on' : '' })));
+    if (keep) keep.page = page;
   };
   prev.addEventListener('click', () => { if (page > 0) { page--; paint(); } });
   next.addEventListener('click', () => { if (page < pages - 1) { page++; paint(); } });

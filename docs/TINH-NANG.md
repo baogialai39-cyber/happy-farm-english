@@ -253,11 +253,29 @@
 
 ---
 
+## S. Màu sắc, nội thất, vòng quay hạt giống, kinh tế (giai đoạn 10)
+
+| Mã | Tính năng | Tiêu chí nghiệm thu | Trạng thái |
+|---|---|---|---|
+| F-220 | Màu sắc tươi sáng, tương phản tốt hơn, ánh sáng ấm (không đổi bố cục) | Thế giới, màn chờ, màn chào tươi hơn, không chói | DONE |
+| F-221 | HOME DECOR SHOP: 10 món nội thất (50–100 xu), BUY, báo thiếu xu bằng tiếng Việt | Đủ xu mới mua được; đồ vào kho nội thất | DONE |
+| F-222 | Đặt đồ nội thất trong nhà (chọn ô hợp lệ, không chặn đường) | Đồ xuất hiện thật, có va chạm | DONE |
+| F-223 | Di chuyển / cất đồ đã đặt; lưu vị trí | Tải lại trang giữ nguyên | DONE |
+| F-224 | LUCKY SEED WHEEL: câu đúng → lượt quay (5/7/10 theo tuổi), SPIN, lịch sử | Không quay thêm bằng tải lại; không mua lượt | DONE |
+| F-225 | 5 hạt giống đặc biệt: gieo, lớn, thu hoạch → phần thưởng vào túi đồ | Phần thưởng có thật trong túi; hiệu ứng + âm thanh | DONE |
+| F-226 | Cân bằng kinh tế (giá bán, hạt, phụ kiện 4–5, đồ ăn 4–5, nguyên liệu, vườn cây 10 phút) | Không lách kiếm xu; xu/đồ cũ giữ nguyên | DONE |
+| F-227 | Vé sở thú 30 xu / lượt | Thiếu xu không vào được; không trừ 2 lần một lượt | DONE |
+| F-228 | Vườn cây: hái lần 2 chỉ đọc số đếm ("One!", "Two!"…), không kèm tên trái cây | Khung hiện "1 · ONE"; đọc 1 lần; số = số quả trong túi | DONE |
+| F-229 | Hiệu ứng vòng quay hồi hộp: lấy đà, chậm dần, tiếng tích + kim bật mỗi ô, đèn vành chạy chậm, ô trúng sáng, pháo giấy | Không nháy > 3 lần/giây; không suýt trúng; kết quả vẫn chốt trước; giảm chuyển động → bản ngắn | DONE |
+| F-230 | Cỏ xanh đậm sắc nét; mái 5 cửa hàng màu tím / đỏ / vàng đậm có viền | Cảnh rõ nét; 2 cửa hàng cạnh nhau khác màu; không đổi bố cục | DONE |
+
+---
+
 ## Tổng hợp trạng thái
 
 | Trạng thái | Số lượng |
 |---|---|
-| DONE | 112 |
+| DONE | 123 |
 | IN PROGRESS | 9 |
 | TODO | 11 |
 | ĐÃ GỠ | 13 |
@@ -313,3 +331,11 @@
 | 2026-11-08 | **Gỡ giai đoạn 9** (F-190 → F-202 → ĐÃ GỠ): bỏ bản đồ thế giới isometric, thanh công cụ trái, Pet Park, School, Library, đổi nhân vật từ thanh trái. **Khôi phục giao diện giai đoạn 8**: LET'S GO vào thẳng nơi đang chơi; nút 🏠 và 🗺️ trên HUD; bảng Map 2 nơi Farm ↔ Happy Zoo (F-172) + Zoo Passport; cổng sở thú mở bảng Map. CLAUDE.md và SPEC trở lại như trước giai đoạn 9. Save có `place` = park/school/library → tự về nông trại | Chủ dự án: "quay lại giao diện cũ đi bạn chứ cái này không ok" |
 | 2026-11-08 | Thêm F-210 → F-212 (âm thanh trên iPhone + TEST SOUND). Không đổi giao diện của bé; nút bật/tắt nhạc giữ nguyên | Chủ dự án báo: bản Vercel không có âm thanh trên iPhone |
 | 2026-11-08 | Sửa âm thanh iPhone: mở khóa Web Audio + giọng đọc ngay trong thao tác chạm (touchend/click/pointerup), resume cả `interrupted`, phát `silence.wav` qua thẻ <audio> + `audioSession = playback` để nghe được khi gạt im lặng, giọng mặc định en-US khi iOS chưa có danh sách giọng, mỗi lần chạm xóa khóa "tắt giọng sau 3 lỗi", sửa regex giọng trẻ em (ký tự backspace lạ). Thêm 2 file `public/sounds/*.wav`. DONE F-212 (TEST SOUND). F-210, F-211 chờ chủ dự án thử trên iPhone thật | 119 unit test (thêm 8: mở khóa giọng đồng bộ, giọng mặc định iOS, máy tính không dự phòng, gỡ khóa lỗi, TEST SOUND báo thật, 2 file WAV hợp lệ) + thử trên Chromium (bảng ứng dụng): TEST SOUND toàn ✅, Hello! đọc xong, chạm COW đọc tên, chạm làm AudioContext từ suspended → running, bật/tắt nhạc. Chưa thử được Safari iOS thật |
+| 2026-11-09 | Thêm F-220 → F-227. **Thay đổi tính năng DONE theo yêu cầu chủ dự án (không xóa chức năng)**: F-103 / F-105 / F-102 (giá hạt, giá bán nông sản, giá phụ kiện, giá nguyên liệu), F-156 (vườn cây chín lại sau 10 phút thay vì 1 phút), F-172 (vào sở thú cần vé 30 xu / lượt), Baking Shop bán thêm đồ ăn làm sẵn, vòi phun nước dời chỗ để có chỗ cho cửa hàng nội thất | Chủ dự án yêu cầu ở prompt giai đoạn 10: cân bằng kinh tế (bảng giá bán nông sản, quần áo / đồ ăn 4–5 xu, nội thất ~100 xu), thêm HOME DECOR SHOP, LUCKY SEED WHEEL, vé sở thú 30 xu |
+| 2026-11-09 | Giai đoạn 10 xong: DONE F-220 → F-227. Sửa lỗi phát hiện khi chạy thử: (1) cảnh cửa hàng nội thất trùng tên lớp `.shop-decor` (lớp nền trang trí, `pointer-events: none`) nên không bấm được → đổi thành `.shop-home`; (2) mua xong lưới hàng nhảy về trang 1 → giữ trang đang xem (`pagedGrid` thêm tham số `keep`, chỉ cửa hàng nội thất dùng); (3) ô treo tranh bị HUD che → camera dời tới ô đặt + dải hướng dẫn xuống dưới; (4) SPIN NOW ở màn tổng kết mở vòng quay phía sau mini-game → mở ngay trên mini-game. Hồi quy: mini-game (không khen giữa chừng, sai không phạt), Cổng phụ huynh, giới hạn thời gian 2–3 tuổi (màn "The farm is sleeping"), ngủ qua đêm, gieo / tưới / chăm / thu hoạch, Farm ↔ Zoo, tạo hồ sơ mới | 137 unit test (thêm 18: bảng giá, mua > bán, phụ kiện / đồ ăn 4–5, 10 món nội thất 50–100, vé 30 xu không trừ 2 lần + save cũ, mua / đặt / dời / cất nội thất + lọc dữ liệu lạ, đặt kín nhà vẫn còn đường, tranh chỉ trên tường, thảm không chặn, 5/7/10 câu, quay chốt trước + không quay khi hết lượt + tải lại, lịch sử 50, gieo & thu hoạch 5 hạt đặc biệt) + chạy thử trong trình duyệt: thiếu xu → "You need 100 coins!" + tiếng Việt; mua TV / tranh / ghế / thảm (xu trừ đúng, tải lại còn nguyên); đặt TV, treo tranh, trải thảm, MOVE, PUT AWAY (lưu đúng); 2 ván Find the Word → "You got 1 free spin!" → SPIN (Toy Seed, Balloon Seed); gieo Toy Seed → tưới → nhổ cỏ → thu hoạch Kite (🎉 + thẻ từ); vé sở thú 60 → 30 xu + "TICKET!", tải lại trong sở thú không trừ thêm, hồ sơ 15 xu bị chặn "You need 30 coins to visit the zoo!" | 
+| 2026-11-09 | Thêm F-228. **Thay đổi tính năng DONE F-156 (không xóa chức năng)**: câu đếm khi quả rơi vào giỏ đổi từ "One mango." thành chỉ số đếm "One!" (khung "1 · ONE", tiếng Việt "Số 1"). Hái quả, giỏ, số lượng trong túi giữ nguyên | Chủ dự án: "sửa từ cách đếm 1 (tên trái cây)… thành số đếm 1 (one) tránh nhiều từ bé nghe bị rối" |
+| 2026-11-09 | DONE F-228 | 138 unit test (thêm: chỉ số đếm, không tên quả, 1→"One!", 21→"TWENTY-ONE") + chạy thử: hái xoài lần 1 đọc "Mango!" ×3, lần 2 khung "1 · ONE" / "2 · TWO", giọng đọc ghi nhận đúng "Two!", giỏ +1, số trong túi đúng |
+| 2026-11-09 | Thêm F-229 (thay đổi phần hiển thị của F-224, không đổi luật lượt quay) | Chủ dự án: "khi mà quay vòng quay bạn nên thêm animation vô để nó thú vị và kịch tính hơn" |
+| 2026-11-09 | DONE F-229 | 140 unit test (thêm: góc dừng luôn đúng ô đã chốt kể cả lệch ngẫu nhiên, quay ≥ 4 vòng, đường chậm dần không vượt/giật lùi) + chạy thử: ghi góc từng khung hình — lấy đà lùi ~12°, quay ~5 vòng trong 4,5 giây chậm dần, kim bật 27 lần (= 27 tiếng tích), đèn chạy chỉ khi quay, dừng hiện ô trúng + 🎉 TOY SEED! |
+| 2026-11-16 | Thêm F-230 (đổi màu của F-220 cỏ xanh nhạt và mái cửa hàng pastel — không đổi chức năng) | Chủ dự án: "nền cỏ phải chuyển sang xanh đậm để có độ nét; mái nhà của các cửa hàng (shop) đổi màu sang màu tím, đỏ, vàng (sắc nét)" |
+| 2026-11-16 | DONE F-230: cỏ xanh đậm (ô cỏ, ngọn cỏ, nền ngoài bản đồ, nền màn hình); mái Accessory tím, Seed đỏ, Fruit Market vàng, Baking tím, Home Decor đỏ; viền tối + sọc trắng đặc (95%) | 140 unit test + chạy thử trong trình duyệt: cỏ xanh đậm, đường đất / hoa nổi rõ; Accessory Shop (tím), Seed Shop (đỏ), Fruit Market (vàng) hiển thị sắc nét, chữ biển tên vẫn rõ |

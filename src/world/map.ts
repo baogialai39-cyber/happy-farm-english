@@ -22,7 +22,7 @@ export type ZoneId =
   | 'living' | 'bedroom' | 'kitchen' | 'baking' | 'bathroom'
   | 'garden' | 'pen' | 'pond' | 'yard' | 'orchard'
   | 'zoo-grassland' | 'zoo-forest' | 'zoo-ice' | 'zoo-ocean' | 'zoo-birds' | 'zoo-plaza' | 'zoo-lake'
-  | 'shop-accessory' | 'shop-seed' | 'shop-market' | 'shop-baking';
+  | 'shop-accessory' | 'shop-seed' | 'shop-market' | 'shop-baking' | 'shop-decor';
 
 export interface Zone {
   id: ZoneId;
@@ -56,6 +56,10 @@ export interface WorldObject {
   tree?: string;
   /** Vị trí quả trên cây (khi chạm vào một quả). */
   slot?: number;
+  /** Vẽ sát mặt đất, đi lên được (thảm). */
+  flat?: boolean;
+  /** Đồ nội thất bé đã đặt (uid trong WorldSave.furniture.placed). */
+  uid?: number;
   /** Chữ hiển thị trên biển (mặc định = word). */
   label?: string;
   /** Sở thú: khu của con vật / trạm chăm sóc (ZooZone). */
@@ -210,6 +214,8 @@ function build(): WorldMap {
 
   // ----- Cửa hàng (5 × 3, cửa ở giữa hàng dưới) -----
   const shops: [ShopId, number, ZoneId][] = [['accessory', 16, 'shop-accessory'], ['seed', 23, 'shop-seed'], ['market', 30, 'shop-market'], ['baking', 37, 'shop-baking']];
+  // HOME DECOR SHOP (giai đoạn 10, SPEC 21.2): sân trước nhà, cửa nhìn xuống đường chính
+  add({ id: 'shop-decor', kind: 'shop', x: 25, y: 16, w: 5, h: 3, solid: true, word: 'shop', emoji: '🏪', action: 'shop', zone: 'shop-decor', shop: 'decor', hit: { x: 27, y: 18, w: 1, h: 1 } });
   for (const [shop, x, zone] of shops) {
     add({ id: `shop-${shop}`, kind: 'shop', x, y: 25, w: 5, h: 3, solid: true, word: 'shop', emoji: '🏪', action: 'shop', zone, shop, hit: { x: x + 2, y: 27, w: 1, h: 1 } });
   }
@@ -225,7 +231,7 @@ function build(): WorldMap {
 
   // ----- Vật trang trí mở khóa bằng sao (vị trí cố định, không chắn đường — có test) -----
   for (const [id, x, y, word, emoji] of [
-    ['flower-pot', 21, 15, 'flower pot', '🪴'], ['bench', 14, 16, 'bench', '🪑'], ['fountain', 27, 18, 'fountain', '⛲'],
+    ['flower-pot', 21, 15, 'flower pot', '🪴'], ['bench', 14, 16, 'bench', '🪑'], ['fountain', 34, 17, 'fountain', '⛲'],
     ['birdhouse', 33, 18, 'birdhouse', '🐦'], ['rainbow', 6, 16, 'rainbow', '🌈'],
   ] as const) {
     add({ id: `decor-${id}`, kind: 'decor', x, y, w: 1, h: 1, solid: true, word, emoji, action: 'decor', zone: 'yard', decor: id });
@@ -251,6 +257,7 @@ function build(): WorldMap {
     { id: 'shop-seed', name: 'Seed Shop', emoji: '🌱', vocab: 'seeds', x: 23, y: 28, w: 5, h: 2 },
     { id: 'shop-market', name: 'Fruit Market', emoji: '🍓', vocab: 'market', x: 30, y: 28, w: 5, h: 2 },
     { id: 'shop-baking', name: 'Baking Shop', emoji: '🧁', vocab: 'bakery', x: 37, y: 28, w: 5, h: 2 },
+    { id: 'shop-decor', name: 'Home Decor Shop', emoji: '🛋️', vocab: 'home decor', x: 25, y: 19, w: 5, h: 1 },
   ];
 
   return { id: 'farm', w: MAP_W, h: MAP_H, tiles: t, objects, zones, spawn: { x: 17.5, y: 16.5 } };

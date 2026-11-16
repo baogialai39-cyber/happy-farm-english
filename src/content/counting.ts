@@ -54,3 +54,12 @@ const VI: Record<string, string> = {
 export function countVi(word: string, n: number): string {
   return `${n} ${VI[word] ?? word}`;
 }
+
+/**
+ * Vườn cây (F-228): chỉ đọc SỐ ĐẾM, không kèm tên quả — bé 2–8 tuổi nghe ít từ, đỡ rối.
+ * 1 → { label: "1 · ONE", say: "One!", vi: "Số 1" }.
+ */
+export function countNumberOnly(n: number): { label: string; say: string; vi: string } {
+  const w = numberWord(n);
+  return { label: `${n} · ${w.toUpperCase()}`, say: `${w[0].toUpperCase()}${w.slice(1)}!`, vi: `Số ${n}` };
+}
